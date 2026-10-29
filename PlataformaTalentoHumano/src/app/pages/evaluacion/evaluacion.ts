@@ -4,7 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { RouterModule, Router, ActivatedRoute } from '@angular/router';
 import { HttpClient } from '@angular/common/http';
 import { MatIconModule } from '@angular/material/icon';
-import { AuthService } from '../../services/auth.service';
+import { AuthService, getApiBaseUrl } from '../../services/auth.service';
 
 export interface CriterioEvaluacion {
   id: string;
@@ -143,7 +143,9 @@ export class EvaluacionComponent implements OnInit {
   // Carga las postulaciones reales desde Django
   cargarDocentes(): void {
     this.cargando = true;
-    const url = `http://127.0.0.1:8000/api/postulaciones/?_t=${Date.now()}`;
+    const usuario = this.authService.usuarioActual();
+    const rolParam = usuario?.rol ? `&rol_evaluador=${usuario.rol}` : '';
+    const url = `${getApiBaseUrl()}/api/postulaciones/?_t=${Date.now()}${rolParam}`;
 
     this.http.get<any[]>(url).subscribe({
       next: (lista) => {
@@ -394,14 +396,17 @@ export class EvaluacionComponent implements OnInit {
 
     this.guardando = true;
     const promedioFinal = this.promedioActual;
-    const evaluadorId = this.authService.usuarioActual()?.id;
+    const usuario = this.authService.usuarioActual();
+    const evaluadorId = usuario?.id;
+    const rolEvaluador = usuario?.rol || 'VICERRECTORADO';
 
     // Persistir puntaje y criterios en Django MySQL usando el endpoint de evaluacion
-    this.http.post<any>(`http://127.0.0.1:8000/api/postulaciones/${this.docenteSeleccionado.id}/evaluar/`, {
+    this.http.post<any>(`${getApiBaseUrl()}/api/postulaciones/${this.docenteSeleccionado.id}/evaluar/`, {
       criterios: this.criterios.map(c => c.puntaje),
       promedio: promedioFinal,
       observaciones: this.observaciones,
-      evaluador_id: evaluadorId
+      evaluador_id: evaluadorId,
+      rol_evaluador: rolEvaluador
     }).subscribe({
       next: (res) => {
         this.guardando = false;

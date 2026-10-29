@@ -476,18 +476,19 @@
 
       .kpi-number-row {
         display: flex;
-        align-items: baseline;
+        align-items: center;
         justify-content: center;
         gap: 0.5rem;
         margin-bottom: 0.35rem;
-        white-space: nowrap;
 
         .kpi-current-step {
-          font-size: 1.85rem;
-          font-weight: 800;
+          font-size: 1.15rem;
+          font-weight: 700;
           color: var(--color-primario);
-          line-height: 1.1;
-          white-space: nowrap;
+          line-height: 1.3;
+          text-align: center;
+          white-space: normal;
+          max-width: 280px;
         }
 
         .kpi-total-steps {
@@ -604,7 +605,8 @@
       @include smooth-transition;
 
       &:hover {
-        background-color: var(--color-primario-oscuro);
+        background-color: #00897b !important;
+        color: #ffffff !important;
         transform: translateY(-2px);
         box-shadow: 0 6px 18px rgba(0, 191, 165, 0.4);
       }

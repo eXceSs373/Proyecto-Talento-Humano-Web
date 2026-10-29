@@ -4,7 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { RouterModule, Router } from '@angular/router';
 import { HttpClient } from '@angular/common/http';
 import { MatIconModule } from '@angular/material/icon';
-import { AuthService } from '../../services/auth.service';
+import { AuthService, getApiBaseUrl } from '../../services/auth.service';
 
 export interface ExpedienteCvDigital {
   uuid: string;
@@ -129,7 +129,7 @@ export class MiPostulacionComponent implements OnInit {
   // Carga las postulaciones reales del usuario desde el backend Django
   cargarPostulacionesUsuario(usuario: any): void {
     this.cargando = true;
-    const url = `http://127.0.0.1:8000/api/postulaciones/?usuario=${usuario.id}&_t=${Date.now()}`;
+    const url = `${getApiBaseUrl()}/api/postulaciones/?usuario=${usuario.id}&_t=${Date.now()}`;
 
     this.http.get<any[]>(url).subscribe({
       next: (lista) => {
@@ -155,17 +155,17 @@ export class MiPostulacionComponent implements OnInit {
   // Convierte el objeto devuelto por Django al modelo de seguimiento de la interfaz
   private mapearPostulacionBackend(item: any, usuarioSesion: any): PostulacionSeguimiento {
     const etapasNombres: Record<number, string> = {
-      1: 'Etapa 1: Publicación de la Convocatoria',
-      2: 'Etapa 2: Postulación Recibida en Sistema',
-      3: 'Etapa 3: Preselección y Validación Curricular',
-      4: 'Etapa 4: Notificación de Oferta Laboral',
-      5: 'Etapa 5: Evaluaciones y Oposición',
-      6: 'Etapa 6: Ranking y Resultados Finales',
-      7: 'Etapa 7: Contratación y Adscripción Institucional'
+      1: 'Publicación de la Convocatoria',
+      2: 'Postulación Recibida en Sistema',
+      3: 'Preselección y Validación Curricular',
+      4: 'Notificación de Oferta Laboral',
+      5: 'Evaluaciones y Oposición',
+      6: 'Ranking y Resultados Finales',
+      7: 'Contratación y Adscripción Institucional'
     };
 
     const etapaNum = item.etapa_actual || 2;
-    const etapaNombre = etapasNombres[etapaNum] || `Etapa ${etapaNum}`;
+    const etapaNombre = etapasNombres[etapaNum] || `Fase ${etapaNum}`;
 
     let tipoEstado: 'progreso' | 'exito' | 'pendiente' | 'alerta' = 'progreso';
     if (etapaNum >= 6) {
@@ -346,7 +346,7 @@ export class MiPostulacionComponent implements OnInit {
       if (this.postulacion && this.postulacion.ofertaLaboral) {
         this.postulacion.ofertaLaboral.estadoRespuesta = 'Aceptada';
         this.postulacion.etapaActual = 5;
-        this.postulacion.etapaNombre = 'Etapa 5: Evaluaciones y Oposición';
+        this.postulacion.etapaNombre = 'Evaluaciones y Oposición';
         this.postulacion.estadoGeneral = 'Oferta Aceptada • Convocado a Oposición';
         this.postulacion.tipoEstado = 'exito';
       }
@@ -455,6 +455,95 @@ startxref
       console.error('Error al generar PDF de descarga:', err);
       alert('No se pudo procesar la descarga del archivo.');
     }
+  }
+
+  // Eliminar el archivo PDF actual de la postulacion
+  eliminarCv(): void {
+    if (!this.postulacion) return;
+    if (!confirm('¿Estás seguro de que deseas eliminar tu expediente digital PDF? Podrás adjuntar uno nuevo inmediatamente.')) {
+      return;
+    }
+
+    this.http.delete(`${getApiBaseUrl()}/api/postulaciones/${this.postulacion.id}/gestionar_expediente/`).subscribe({
+      next: () => {
+        if (this.postulacion) {
+          this.postulacion.expedienteCv = undefined;
+        }
+        this.mostrarNotificacion('Expediente PDF eliminado. Ahora puedes adjuntar tu nuevo archivo.', 'info');
+        this.cdr.detectChanges();
+      },
+      error: (err) => {
+        console.warn('Error al eliminar expediente:', err);
+        // Fallback local
+        if (this.postulacion) {
+          this.postulacion.expedienteCv = undefined;
+        }
+        this.mostrarNotificacion('Expediente PDF eliminado localmente.', 'info');
+        this.cdr.detectChanges();
+      }
+    });
+  }
+
+  // Subir o reemplazar un nuevo archivo PDF
+  subirNuevoPdf(event: Event): void {
+    const input = event.target as HTMLInputElement;
+    if (!input.files || input.files.length === 0 || !this.postulacion) return;
+
+    const file = input.files[0];
+    if (file.type !== 'application/pdf' && !file.name.toLowerCase().endsWith('.pdf')) {
+      alert('Solo se admiten documentos en formato PDF.');
+      input.value = '';
+      return;
+    }
+
+    const LIMITE_MB = 50;
+    const pesoMB = file.size / (1024 * 1024);
+    if (pesoMB > LIMITE_MB) {
+      alert(`El archivo pesa ${pesoMB.toFixed(1)} MB y excede el límite máximo permitido de ${LIMITE_MB} MB.`);
+      input.value = '';
+      return;
+    }
+
+    const formData = new FormData();
+    formData.append('archivo_pdf', file, file.name);
+    formData.append('nombre_archivo', `CV_ISTS_${this.postulacion.cedula || 'DOC'}_${Date.now()}.pdf`);
+    formData.append('nombre_original', file.name);
+    formData.append('tamanio', `${pesoMB.toFixed(2)} MB`);
+
+    this.http.post<any>(`${getApiBaseUrl()}/api/expedientes/`, formData).subscribe({
+      next: (expGuardado) => {
+        // Asociar a la postulacion
+        this.http.post<any>(`${getApiBaseUrl()}/api/postulaciones/${this.postulacion!.id}/gestionar_expediente/`, {
+          expediente_id: expGuardado.id
+        }).subscribe({
+          next: () => {
+            const urlReal = expGuardado.archivo_pdf ? `${getApiBaseUrl()}${expGuardado.archivo_pdf}` : undefined;
+            this.postulacion!.expedienteCv = {
+              uuid: expGuardado.uuid_archivo || `ISTS-DOC-${expGuardado.id}`,
+              nombreArchivo: expGuardado.nombre_archivo,
+              nombreOriginal: expGuardado.nombre_original,
+              archivoUrl: urlReal,
+              tamanio: `${pesoMB.toFixed(2)} MB`,
+              fechaSubida: 'Hoy',
+              fechaCaducidad: 'En 90 días',
+              diasRestantes: 90,
+              estado: 'Activo'
+            };
+            this.mostrarNotificacion('¡Nuevo expediente digital PDF cargado y respaldado exitosamente!', 'exito');
+            this.cdr.detectChanges();
+          },
+          error: () => {
+            this.mostrarNotificacion('Archivo subido. Recarga para sincronizar.', 'info');
+          }
+        });
+      },
+      error: (err) => {
+        console.error('Error al subir nuevo PDF:', err);
+        alert('No se pudo subir el archivo PDF. Intenta nuevamente.');
+      }
+    });
+
+    input.value = '';
   }
 
   cerrarSesion(): void {

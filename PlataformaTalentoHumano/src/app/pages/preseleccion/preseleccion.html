@@ -579,21 +579,33 @@
             <span class="doc-badge">Modo Lectura Previa</span>
           </div>
 
-          <!-- Hoja de vida -->
-          <div class="simulated-doc-frame">
-            <div class="doc-page-mock">
-              <div class="doc-header-ists">
-                <span class="doc-logo-text">INSTITUTO SUPERIOR TECNOLÓGICO SUDAMERICANO</span>
-                <span class="doc-sub">Carpeta de Méritos y Postulación Docente</span>
+          <!-- Hoja de vida / Expediente real PDF -->
+          @if (candidatoSeleccionado.archivoUrl && pdfUrlSeguro) {
+            <div class="real-pdf-preview-box">
+              <iframe [src]="pdfUrlSeguro" class="real-pdf-iframe" title="Expediente Digital Postulante"></iframe>
+              <div class="pdf-viewer-bar">
+                <a [href]="candidatoSeleccionado.archivoUrl" target="_blank" class="btn-open-pdf-external">
+                  <mat-icon class="icon-xs">open_in_new</mat-icon>
+                  <span>Abrir PDF en Ventana Completa</span>
+                </a>
               </div>
-              <div class="doc-skeleton-line title"></div>
-              <div class="doc-skeleton-line short"></div>
-              <div class="doc-skeleton-line full"></div>
-              <div class="doc-skeleton-line full"></div>
-              <div class="doc-skeleton-line medium"></div>
-              <div class="doc-watermark">VISTA PREVIA SIN DESCARGA</div>
             </div>
-          </div>
+          } @else {
+            <div class="simulated-doc-frame">
+              <div class="doc-page-mock">
+                <div class="doc-header-ists">
+                  <span class="doc-logo-text">INSTITUTO SUPERIOR TECNOLÓGICO SUDAMERICANO</span>
+                  <span class="doc-sub">Carpeta de Méritos y Postulación Docente</span>
+                </div>
+                <div class="doc-skeleton-line title"></div>
+                <div class="doc-skeleton-line short"></div>
+                <div class="doc-skeleton-line full"></div>
+                <div class="doc-skeleton-line full"></div>
+                <div class="doc-skeleton-line medium"></div>
+                <div class="doc-watermark">EXPEDIENTE DIGITAL REGISTRADO</div>
+              </div>
+            </div>
+          }
         </div>
 
       </div>

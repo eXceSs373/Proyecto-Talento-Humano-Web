@@ -1,6 +1,7 @@
 import { Injectable, inject, signal } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable, tap } from 'rxjs';
+import { getApiBaseUrl } from './auth.service';
 
 @Injectable({
   providedIn: 'root'
@@ -8,8 +9,10 @@ import { Observable, tap } from 'rxjs';
 export class ConvocatoriasService {
   private http = inject(HttpClient);
 
-  // API en Django para obtener la lista de convocatorias
-  private apiUrl = 'http://127.0.0.1:8000/api/convocatorias/';
+  // API en Django para obtener la lista de convocatorias de forma dinámica
+  get apiUrl(): string {
+    return `${getApiBaseUrl()}/api/convocatorias/`;
+  }
 
   // Senal reactiva para mantener las convocatorias en memoria y evitar que se pierdan al navegar
   private vacantesSignal = signal<any[]>([]);

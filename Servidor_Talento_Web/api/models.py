@@ -96,9 +96,10 @@ class OfertaLaboral(models.Model):
     beneficios = models.JSONField(default=list)
     observaciones = models.TextField(blank=True, null=True)
 
-# Clase demostrativa y evaluacion de clase
+# Clase demostrativa y evaluacion de clase por rol evaluador
 class EvaluacionClase(models.Model):
-    postulacion = models.OneToOneField(Postulacion, on_delete=models.CASCADE, related_name='evaluacion_clase')
+    postulacion = models.ForeignKey(Postulacion, on_delete=models.CASCADE, related_name='evaluaciones_clase')
+    rol_evaluador = models.CharField(max_length=50, blank=True, null=True)
     tema_asignado = models.CharField(max_length=255)
     asignatura = models.CharField(max_length=150)
     laboratorio = models.CharField(max_length=100)
@@ -114,6 +115,9 @@ class EvaluacionClase(models.Model):
     promedio_clase = models.DecimalField(max_digits=5, decimal_places=2, default=0.0)
     observaciones = models.TextField(blank=True, null=True)
     evaluador = models.ForeignKey(Usuario, on_delete=models.SET_NULL, null=True, related_name='evaluaciones_realizadas')
+
+    class Meta:
+        unique_together = ('postulacion', 'rol_evaluador')
 
 # Ranking
 class ResolucionFinal(models.Model):

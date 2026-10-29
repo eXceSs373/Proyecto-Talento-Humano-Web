@@ -4,7 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { RouterModule, Router, ActivatedRoute } from '@angular/router';
 import { HttpClient } from '@angular/common/http';
 import { MatIconModule } from '@angular/material/icon';
-import { AuthService } from '../../services/auth.service';
+import { AuthService, getApiBaseUrl } from '../../services/auth.service';
 
 export interface DocumentoCV {
   nombre: string;
@@ -96,6 +96,12 @@ export class PostulacionComponent implements OnInit {
       return;
     }
 
+    if (usuario.rol !== 'POSTULANTE') {
+      alert('Acceso restringido: Las cuentas del personal institucional no pueden postularse. Esta acción es exclusiva para aspirantes y postulantes externos.');
+      this.router.navigate(['/inicio']);
+      return;
+    }
+
     // Precargar datos del perfil con la cuenta autenticada
     this.perfil.nombres = usuario.nombres || usuario.nombre?.split(' ')[0] || '';
     this.perfil.apellidos = usuario.apellidos || (usuario.nombre?.split(' ').slice(1).join(' ')) || '';
@@ -121,7 +127,7 @@ export class PostulacionComponent implements OnInit {
 
       // Si no viene ID, verificar si hay convocatorias en Django para asignar la primera
       if (!params['id']) {
-        this.http.get<any[]>('http://127.0.0.1:8000/api/convocatorias/').subscribe({
+        this.http.get<any[]>(`${getApiBaseUrl()}/api/convocatorias/`).subscribe({
           next: (convs) => {
             if (convs && convs.length > 0) {
               const primera = convs[0];
@@ -251,22 +257,26 @@ export class PostulacionComponent implements OnInit {
     formData.append('tamanio', this.archivoCv.tamano);
     formData.append('estado', 'Activo');
 
-    this.http.post<any>('http://127.0.0.1:8000/api/expedientes/', formData).subscribe({
+    this.http.post<any>(`${getApiBaseUrl()}/api/expedientes/`, formData).subscribe({
       next: (expedienteCreado) => {
         // 2. Registrar la postulación vinculada a la vacante y al usuario
+        const aniosExp = this.perfil.aniosExperiencia || 1;
+        const meritosCalculados = Math.min(100, Math.max(50, 70 + (aniosExp * 5)));
+
         const postPayload = {
           usuario: usuario.id,
           convocatoria: this.convocatoriaId,
           expediente_cv: expedienteCreado.id,
           titulo_profesional: this.perfil.tituloAcademico || 'Profesional Postulante',
           institucion_titulo: 'Institución de Educación Superior Registrada',
-          anios_experiencia_profesional: this.perfil.aniosExperiencia || 1,
+          anios_experiencia_profesional: aniosExp,
           anios_experiencia_docente: 0,
+          puntaje_meritos: meritosCalculados,
           etapa_actual: 2,
           estado: 'Recibida'
         };
 
-        this.http.post<any>('http://127.0.0.1:8000/api/postulaciones/', postPayload).subscribe({
+        this.http.post<any>(`${getApiBaseUrl()}/api/postulaciones/`, postPayload).subscribe({
           next: (postulacionCreada) => {
             this.enviando = false;
             this.codigoExpediente = postulacionCreada.numero_tramite || `ISTS-POST-2026-${postulacionCreada.id}`;

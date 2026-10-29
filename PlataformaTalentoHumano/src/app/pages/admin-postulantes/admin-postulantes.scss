@@ -104,25 +104,32 @@
       }
 
       .table-responsive {
-        overflow-x: auto;
+        width: 100%;
+        overflow-x: hidden;
+
+        @media (max-width: 900px) {
+          overflow-x: auto;
+        }
 
         .simple-table {
           width: 100%;
+          table-layout: auto;
           border-collapse: collapse;
           text-align: left;
-          font-size: 0.86rem;
+          font-size: 0.88rem;
 
           thead {
             background-color: var(--bg-tarjetas-secundario);
             border-bottom: 2px solid var(--borde-tarjetas);
 
             th {
-              padding: 0.75rem 0.85rem;
+              padding: 0.75rem 0.65rem;
               font-weight: 700;
               color: var(--texto-secundario);
               text-transform: uppercase;
               font-size: 0.74rem;
               letter-spacing: 0.5px;
+              white-space: nowrap;
             }
           }
 
@@ -136,8 +143,9 @@
               }
 
               td {
-                padding: 0.8rem 0.85rem;
+                padding: 0.75rem 0.65rem;
                 vertical-align: middle;
+                white-space: nowrap;
 
                 code {
                   background-color: var(--bg-tarjetas-secundario);

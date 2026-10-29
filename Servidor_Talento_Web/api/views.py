@@ -209,9 +209,23 @@ class PostulacionViewSet(viewsets.ModelViewSet):
         promedio = request.data.get('promedio', 0.0)
         observaciones = request.data.get('observaciones', '')
         evaluador_id = request.data.get('evaluador_id')
+        rol_evaluador = request.data.get('rol_evaluador')
+        
+        evaluador_obj = None
+        if evaluador_id:
+            try:
+                evaluador_obj = Usuario.objects.filter(id=evaluador_id).first()
+                if evaluador_obj and not rol_evaluador:
+                    rol_evaluador = evaluador_obj.rol
+            except Exception:
+                pass
+                
+        if not rol_evaluador:
+            rol_evaluador = 'VICERRECTORADO'
         
         evaluacion, _ = EvaluacionClase.objects.get_or_create(
             postulacion=postulacion,
+            rol_evaluador=rol_evaluador,
             defaults={
                 'tema_asignado': f"Clase Demostrativa: {postulacion.convocatoria.titulo}",
                 'asignatura': postulacion.convocatoria.carrera,
@@ -229,21 +243,20 @@ class PostulacionViewSet(viewsets.ModelViewSet):
         
         evaluacion.promedio_clase = promedio
         evaluacion.observaciones = observaciones
-        if evaluador_id:
-            try:
-                evaluador_obj = Usuario.objects.filter(id=evaluador_id).first()
-                if evaluador_obj:
-                    evaluacion.evaluador = evaluador_obj
-            except Exception:
-                pass
+        if evaluador_obj:
+            evaluacion.evaluador = evaluador_obj
         evaluacion.save()
         
-        # Actualizar puntaje y etapa en la postulacion
-        postulacion.puntaje_meritos = promedio
+        # Calcular el promedio de oposicion general entre TODOS los roles que evaluaron al candidato
+        evaluaciones = postulacion.evaluaciones_clase.all()
+        promedios = [float(e.promedio_clase) for e in evaluaciones if e.promedio_clase is not None]
+        promedio_general = round(sum(promedios) / len(promedios), 1) if promedios else float(promedio)
+
+        # Actualizar etapa en la postulacion
         postulacion.etapa_actual = 5
         postulacion.save()
 
-        # Actualizar o registrar en ResolucionFinal para el ranking
+        # Actualizar o registrar en ResolucionFinal para el ranking institucional
         resolucion, _ = ResolucionFinal.objects.get_or_create(
             postulacion=postulacion,
             defaults={
@@ -251,14 +264,40 @@ class PostulacionViewSet(viewsets.ModelViewSet):
                 'puntaje_entrevista': 90.0,
             }
         )
+        nota_meritos = float(postulacion.puntaje_meritos or 75.0)
         nota_entrevista = float(resolucion.puntaje_entrevista or 90.0)
-        resolucion.puntaje_final_ponderado = round((float(promedio) * 0.5) + (nota_entrevista * 0.5), 1)
+        # Ponderacion oficial ISTS: Meritos 20%, Clase 50%, Entrevista 30%
+        resolucion.puntaje_final_ponderado = round((nota_meritos * 0.2) + (promedio_general * 0.5) + (nota_entrevista * 0.3), 1)
         resolucion.save()
         
         return Response({
-            'mensaje': 'Evaluación guardada exitosamente.',
-            'postulacion': PostulacionSerializer(postulacion).data
+            'mensaje': f'Evaluación guardada exitosamente para el rol {rol_evaluador}.',
+            'promedio_rol': promedio,
+            'promedio_general': promedio_general,
+            'postulacion': PostulacionSerializer(postulacion, context={'request': request}).data
         }, status=status.HTTP_200_OK)
+
+    @action(detail=True, methods=['post', 'delete'])
+    def gestionar_expediente(self, request, pk=None):
+        postulacion = self.get_object()
+        if request.method == 'DELETE':
+            postulacion.expediente_cv = None
+            postulacion.save()
+            return Response({'mensaje': 'Expediente digital eliminado correctamente.'}, status=status.HTTP_200_OK)
+            
+        expediente_id = request.data.get('expediente_id')
+        if expediente_id:
+            try:
+                nuevo_exp = ExpedienteCv.objects.get(id=expediente_id)
+                postulacion.expediente_cv = nuevo_exp
+                postulacion.save()
+                return Response({
+                    'mensaje': 'Expediente digital actualizado exitosamente.',
+                    'postulacion': PostulacionSerializer(postulacion, context={'request': request}).data
+                }, status=status.HTTP_200_OK)
+            except ExpedienteCv.DoesNotExist:
+                return Response({'error': 'Expediente no encontrado.'}, status=status.HTTP_404_NOT_FOUND)
+        return Response({'error': 'Debes enviar el expediente_id.'}, status=status.HTTP_400_BAD_REQUEST)
 
 # Ofertas laborales
 class OfertaLaboralViewSet(viewsets.ModelViewSet):

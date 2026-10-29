@@ -39,12 +39,23 @@ export interface RegistroPostulanteDto {
   contrasenia: string;
 }
 
+// Obtiene la URL base de Django de forma dinámica (localhost o IP de red local para acceso móvil)
+export function getApiBaseUrl(): string {
+  if (typeof window !== 'undefined' && window.location && window.location.hostname) {
+    return `http://${window.location.hostname}:8000`;
+  }
+  return 'http://127.0.0.1:8000';
+}
+
 @Injectable({
   providedIn: 'root'
 })
 export class AuthService {
   private readonly STORAGE_KEY = 'ists_usuario_sesion';
-  private readonly apiUrl = 'http://127.0.0.1:8000/api/';
+  
+  get apiUrl(): string {
+    return `${getApiBaseUrl()}/api/`;
+  }
 
   // Usuario en sesion
   private usuarioSignal = signal<UsuarioSesion | null>(this.cargarSesionAlmacenada());

@@ -3,8 +3,9 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { RouterModule } from '@angular/router';
 import { HttpClient } from '@angular/common/http';
+import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
 import { MatIconModule } from '@angular/material/icon';
-import { AuthService } from '../../services/auth.service';
+import { AuthService, getApiBaseUrl } from '../../services/auth.service';
 
 export type EstadoPostulante = 'Recibida' | 'En revisión' | 'Preseleccionada' | 'Rechazada';
 
@@ -25,6 +26,7 @@ export interface Postulante {
   resumenPerfil: string;
   habilidades: string[];
   documentoCv: string;
+  archivoUrl?: string;
   requisitosVerificados: {
     tituloRegistrado: boolean;
     experienciaAcreditada: boolean;
@@ -60,6 +62,7 @@ export class PreseleccionComponent implements OnInit {
 
   // Para ver el detalle del candidato
   candidatoSeleccionado: Postulante | null = null;
+  pdfUrlSeguro: SafeResourceUrl | null = null;
   candidatosComparar: Set<string> = new Set<string>();
 
   // Opciones de filtros
@@ -75,6 +78,7 @@ export class PreseleccionComponent implements OnInit {
 
   public authService = inject(AuthService);
   private http = inject(HttpClient);
+  private sanitizer = inject(DomSanitizer);
   private cdr = inject(ChangeDetectorRef);
 
   ngOnInit(): void {
@@ -89,7 +93,7 @@ export class PreseleccionComponent implements OnInit {
   // Carga todas las postulaciones reales desde Django
   cargarPostulaciones(): void {
     this.cargando = true;
-    const url = `http://127.0.0.1:8000/api/postulaciones/?_t=${Date.now()}`;
+    const url = `${getApiBaseUrl()}/api/postulaciones/?_t=${Date.now()}`;
 
     this.http.get<any[]>(url).subscribe({
       next: (lista) => {
@@ -112,7 +116,7 @@ export class PreseleccionComponent implements OnInit {
 
   // Carga las carreras activas desde las convocatorias en BD
   cargarCarreras(): void {
-    this.http.get<any[]>('http://127.0.0.1:8000/api/convocatorias/').subscribe({
+    this.http.get<any[]>(`${getApiBaseUrl()}/api/convocatorias/`).subscribe({
       next: (convs) => {
         if (Array.isArray(convs)) {
           const lista = Array.from(new Set(convs.map(c => c.carrera).filter(Boolean)));
@@ -155,6 +159,7 @@ export class PreseleccionComponent implements OnInit {
       resumenPerfil: `Postulante para ${item.convocatoria_titulo || 'Cátedra Institucional'}. Expediente verificado con ${item.anios_experiencia_profesional || 1} años de experiencia.`,
       habilidades: ['Docencia Superior', 'Investigación Aplicada', 'TICs Educativas', 'Planificación Pedagógica'],
       documentoCv: item.expediente_original || item.expediente_nombre || 'Hoja_De_Vida.pdf',
+      archivoUrl: item.expediente_archivo_url || '',
       requisitosVerificados: {
         tituloRegistrado: true,
         experienciaAcreditada: (item.anios_experiencia_profesional || 0) >= 1,
@@ -240,7 +245,7 @@ export class PreseleccionComponent implements OnInit {
     const estadoAnterior = postulante.estado;
     postulante.estado = nuevoEstado;
 
-    this.http.patch(`http://127.0.0.1:8000/api/postulaciones/${postulante.id}/`, { estado: nuevoEstado }).subscribe({
+    this.http.patch(`${getApiBaseUrl()}/api/postulaciones/${postulante.id}/`, { estado: nuevoEstado }).subscribe({
       next: () => {
         console.log(`Estado de postulante ${postulante.id} actualizado a: ${nuevoEstado}`);
       },
@@ -255,10 +260,16 @@ export class PreseleccionComponent implements OnInit {
   // Ver expediente
   abrirExpediente(postulante: Postulante): void {
     this.candidatoSeleccionado = postulante;
+    if (postulante.archivoUrl) {
+      this.pdfUrlSeguro = this.sanitizer.bypassSecurityTrustResourceUrl(postulante.archivoUrl);
+    } else {
+      this.pdfUrlSeguro = null;
+    }
   }
 
   cerrarExpediente(): void {
     this.candidatoSeleccionado = null;
+    this.pdfUrlSeguro = null;
   }
 
   // Para comparar postulantes

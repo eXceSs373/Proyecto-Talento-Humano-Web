@@ -4,7 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { RouterModule } from '@angular/router';
 import { HttpClient } from '@angular/common/http';
 import { MatIconModule } from '@angular/material/icon';
-import { AuthService } from '../../services/auth.service';
+import { AuthService, getApiBaseUrl } from '../../services/auth.service';
 
 export interface CandidatoRanking {
   posicion: number;
@@ -120,20 +120,28 @@ export class RankingComponent implements OnInit {
   // Carga convocatorias reales desde MySQL mediante Django
   cargarConvocatorias(): void {
     this.cargando = true;
-    this.http.get<any[]>('http://127.0.0.1:8000/api/convocatorias/?_t=' + Date.now()).subscribe({
+    this.http.get<any[]>(`${getApiBaseUrl()}/api/convocatorias/?_t=` + Date.now()).subscribe({
       next: (convs) => {
         if (Array.isArray(convs) && convs.length > 0) {
-          this.convocatorias = convs.map(c => ({
-            id: String(c.id),
-            titulo: c.titulo,
-            carrera: c.carrera,
-            estado: c.activa ? 'Convocatoria Activa' : 'Proceso Finalizado'
-          }));
+          this.convocatorias = [
+            {
+              id: 'TODAS',
+              titulo: 'Todas las Convocatorias (General)',
+              carrera: 'Todas las Especialidades',
+              estado: 'Convocatoria Activa'
+            },
+            ...convs.map(c => ({
+              id: String(c.id),
+              titulo: c.titulo,
+              carrera: c.carrera,
+              estado: c.activa ? 'Convocatoria Activa' : 'Proceso Finalizado'
+            }))
+          ];
 
           this.metricas.vacantesActivas = convs.filter(c => c.activa !== false).length;
-          this.convocatoriaSeleccionadaId = String(convs[0].id);
+          this.convocatoriaSeleccionadaId = 'TODAS';
 
-          this.cargarRankingPorConvocatoria(this.convocatoriaSeleccionadaId);
+          this.cargarRankingPorConvocatoria('TODAS');
         } else {
           this.convocatorias = [];
           this.rankingCandidatos = [];
@@ -142,7 +150,7 @@ export class RankingComponent implements OnInit {
         }
 
         // Cargar total global de postulaciones para la métrica
-        this.http.get<any[]>('http://127.0.0.1:8000/api/postulaciones/?_t=' + Date.now()).subscribe({
+        this.http.get<any[]>(`${getApiBaseUrl()}/api/postulaciones/?_t=` + Date.now()).subscribe({
           next: (posts) => {
             if (Array.isArray(posts)) {
               this.metricas.totalPostulaciones = posts.length;
@@ -163,7 +171,8 @@ export class RankingComponent implements OnInit {
   // Carga postulantes reales filtrados por la convocatoria seleccionada
   cargarRankingPorConvocatoria(convocatoriaId: string): void {
     this.cargando = true;
-    const url = `http://127.0.0.1:8000/api/postulaciones/?convocatoria=${convocatoriaId}&_t=${Date.now()}`;
+    const filtroParam = (convocatoriaId && convocatoriaId !== 'TODAS') ? `convocatoria=${convocatoriaId}&` : '';
+    const url = `${getApiBaseUrl()}/api/postulaciones/?${filtroParam}_t=${Date.now()}`;
 
     this.http.get<any[]>(url).subscribe({
       next: (lista) => {
@@ -174,7 +183,8 @@ export class RankingComponent implements OnInit {
             const iniciales = ((nombres[0] || '') + (apellidos[0] || '')).toUpperCase() || 'DO';
 
             const meritos = Number(p.puntaje_meritos) || 0;
-            const clase = p.evaluacion_clase?.promedio_clase ? Number(p.evaluacion_clase.promedio_clase) : (meritos || 0);
+            // Promedio consolidado entre todos los roles que evaluaron la clase demostrativa
+            const clase = Number(p.promedio_oposicion_general) || (p.evaluacion_clase?.promedio_clase ? Number(p.evaluacion_clase.promedio_clase) : 0);
             const entrevista = p.resolucion_final?.puntaje_entrevista ? Number(p.resolucion_final.puntaje_entrevista) : (clase > 0 ? 90.0 : 0);
             const finalPonderado = (meritos > 0 || clase > 0 || entrevista > 0)
               ? Math.round((meritos * 0.2 + clase * 0.5 + entrevista * 0.3) * 10) / 10
@@ -285,7 +295,7 @@ export class RankingComponent implements OnInit {
     this.guardandoAccion = true;
 
     // Actualizar en backend
-    this.http.patch(`http://127.0.0.1:8000/api/postulaciones/${this.candidatoSeleccionado.id}/`, {
+    this.http.patch(`${getApiBaseUrl()}/api/postulaciones/${this.candidatoSeleccionado.id}/`, {
       etapa_actual: 4,
       estado: 'Preseleccionada'
     }).subscribe({
@@ -323,7 +333,7 @@ export class RankingComponent implements OnInit {
     this.guardandoAccion = true;
 
     // Actualizar en backend
-    this.http.patch(`http://127.0.0.1:8000/api/postulaciones/${this.candidatoSeleccionado.id}/`, {
+    this.http.patch(`${getApiBaseUrl()}/api/postulaciones/${this.candidatoSeleccionado.id}/`, {
       etapa_actual: 7,
       estado: 'Preseleccionada'
     }).subscribe({

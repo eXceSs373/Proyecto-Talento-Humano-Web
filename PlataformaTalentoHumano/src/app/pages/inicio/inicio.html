@@ -246,14 +246,43 @@
 
             <div class="card-bottom">
               <span class="contract-type">{{ vacante.nivel }}</span>
-              <button
-                type="button"
-                class="btn-apply"
-                (click)="postularse(vacante)"
-                title="Postularme a esta convocatoria">
-                <span>Postularme Ahora</span>
-                <mat-icon class="icon-xs">arrow_forward</mat-icon>
-              </button>
+              @if (!authService.usuarioActual() || authService.usuarioActual()?.rol === 'POSTULANTE') {
+                <button
+                  type="button"
+                  class="btn-apply"
+                  (click)="postularse(vacante)"
+                  title="Postularme a esta convocatoria">
+                  <span>Postularme Ahora</span>
+                  <mat-icon class="icon-xs">arrow_forward</mat-icon>
+                </button>
+              } @else if (authService.tieneRol(['ADMIN_TECNICO', 'TALENTO_HUMANO'])) {
+                <a
+                  routerLink="/preseleccion"
+                  class="btn-apply"
+                  style="text-decoration: none;"
+                  title="Ver y preseleccionar postulantes">
+                  <span>Ver Postulantes</span>
+                  <mat-icon class="icon-xs">folder_shared</mat-icon>
+                </a>
+              } @else if (authService.tieneRol(['VICERRECTORADO', 'BIENESTAR', 'COORDINADOR'])) {
+                <a
+                  routerLink="/evaluacion"
+                  class="btn-apply"
+                  style="text-decoration: none;"
+                  title="Evaluar docentes de esta cátedra">
+                  <span>Evaluar Docentes</span>
+                  <mat-icon class="icon-xs">fact_check</mat-icon>
+                </a>
+              } @else if (authService.tieneRol(['RECTORADO'])) {
+                <a
+                  routerLink="/ranking"
+                  class="btn-apply"
+                  style="text-decoration: none;"
+                  title="Ver ranking oficial">
+                  <span>Ver Ranking</span>
+                  <mat-icon class="icon-xs">workspace_premium</mat-icon>
+                </a>
+              }
             </div>
 
           </article>

@@ -62,6 +62,9 @@ class PostulacionSerializer(serializers.ModelSerializer):
     
     oferta_laboral = serializers.SerializerMethodField()
     evaluacion_clase = serializers.SerializerMethodField()
+    promedio_oposicion_general = serializers.SerializerMethodField()
+    total_evaluaciones = serializers.SerializerMethodField()
+    evaluaciones_roles = serializers.SerializerMethodField()
     resolucion_final = serializers.SerializerMethodField()
     
     def get_usuario_nombre(self, obj):
@@ -71,6 +74,9 @@ class PostulacionSerializer(serializers.ModelSerializer):
 
     def get_expediente_archivo_url(self, obj):
         if obj.expediente_cv and obj.expediente_cv.archivo_pdf:
+            request = self.context.get('request')
+            if request:
+                return request.build_absolute_uri(obj.expediente_cv.archivo_pdf.url)
             return f"http://127.0.0.1:8000{obj.expediente_cv.archivo_pdf.url}"
         return None
 
@@ -83,9 +89,51 @@ class PostulacionSerializer(serializers.ModelSerializer):
         return None
 
     def get_evaluacion_clase(self, obj):
-        if hasattr(obj, 'evaluacion_clase') and obj.evaluacion_clase:
-            return EvaluacionClaseSerializer(obj.evaluacion_clase).data
-        return None
+        request = self.context.get('request')
+        rol_evaluador = None
+        evaluador_id = None
+        if request:
+            rol_evaluador = request.query_params.get('rol_evaluador')
+            evaluador_id = request.query_params.get('evaluador_id')
+        
+        # Si se consulta especificamente para un rol
+        if rol_evaluador:
+            ev = obj.evaluaciones_clase.filter(rol_evaluador=rol_evaluador).first()
+            if ev:
+                return EvaluacionClaseSerializer(ev).data
+            return None
+            
+        if evaluador_id:
+            ev = obj.evaluaciones_clase.filter(evaluador_id=evaluador_id).first()
+            if ev:
+                return EvaluacionClaseSerializer(ev).data
+            return None
+            
+        # Si no se especifica rol, devolver la mas reciente o None
+        ev = obj.evaluaciones_clase.first()
+        return EvaluacionClaseSerializer(ev).data if ev else None
+
+    def get_promedio_oposicion_general(self, obj):
+        evals = obj.evaluaciones_clase.all()
+        if not evals:
+            return 0.0
+        notas = [float(e.promedio_clase) for e in evals if e.promedio_clase is not None]
+        if not notas:
+            return 0.0
+        return round(sum(notas) / len(notas), 1)
+
+    def get_total_evaluaciones(self, obj):
+        return obj.evaluaciones_clase.count()
+
+    def get_evaluaciones_roles(self, obj):
+        return [
+            {
+                'rol': e.rol_evaluador,
+                'promedio': float(e.promedio_clase),
+                'evaluador': f"{e.evaluador.first_name} {e.evaluador.last_name}".strip() if e.evaluador else ''
+            }
+            for e in obj.evaluaciones_clase.all()
+        ]
 
     def get_resolucion_final(self, obj):
         if hasattr(obj, 'resolucion_final') and obj.resolucion_final:

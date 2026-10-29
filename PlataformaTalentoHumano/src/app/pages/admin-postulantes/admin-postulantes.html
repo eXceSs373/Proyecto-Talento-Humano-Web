@@ -22,12 +22,7 @@
     <div class="card-table">
       <div class="table-info-bar">
         <div>
-          <h3>Postulantes Registrados en MySQL ({{ postulantes.length }})</h3>
-          <p>Cuentas creadas para pruebas y registro desde el portal de postulantes.</p>
-        </div>
-        <div class="badge-credential-note">
-          <mat-icon class="icon-xs">key</mat-icon>
-          <span>Contraseña de prueba para todas las cuentas: <strong>123456</strong></span>
+          <h3>Postulantes Registrados {{ postulantes.length }}</h3>
         </div>
       </div>
 
@@ -44,31 +39,25 @@
           <table class="simple-table">
             <thead>
               <tr>
-                <th>ID</th>
-                <th>Cédula</th>
-                <th>Nombres</th>
-                <th>Apellidos</th>
-                <th>Usuario</th>
+                <th style="width: 60px;">ID</th>
+                <th style="width: 120px;">Cédula</th>
+                <th>Postulante</th>
                 <th>Correo Electrónico</th>
                 <th>Teléfono</th>
-                <th>Contraseña</th>
-                <th>Fecha de Registro</th>
-                <th>Vigencia de Archivo</th>
-                <th>Estado</th>
+                <th style="width: 110px;">Contraseña</th>
+                <th>Vigencia Archivo</th>
+                <th style="width: 90px;">Estado</th>
               </tr>
             </thead>
             <tbody>
-              @for (user of postulantes; track user.id) {
+              @for (user of postulantes; track user.id; let i = $index) {
                 <tr>
-                  <td><strong>#{{ user.id }}</strong></td>
+                  <td><strong>#{{ i + 1 }}</strong></td>
                   <td><code>{{ user.cedula }}</code></td>
-                  <td>{{ user.first_name }}</td>
-                  <td>{{ user.last_name }}</td>
-                  <td><code>{{ user.username }}</code></td>
+                  <td><strong>{{ user.first_name }} {{ user.last_name }}</strong></td>
                   <td>{{ user.email }}</td>
                   <td>{{ user.telefono || 'Sin registrar' }}</td>
                   <td><span class="password-chip">123456</span></td>
-                  <td>{{ formatearFecha(user.date_joined) }}</td>
                   <td>
                     @if (user.estadoArchivo === 'activo') {
                       <span class="file-chip active">

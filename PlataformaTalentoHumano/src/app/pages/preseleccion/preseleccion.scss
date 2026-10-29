@@ -1569,6 +1569,47 @@ $bg-rechazada: rgba(220, 38, 38, 0.12);
         }
       }
 
+      .real-pdf-preview-box {
+        display: flex;
+        flex-direction: column;
+        border: 1px solid var(--borde-tarjetas);
+        border-radius: 0 0 8px 8px;
+        overflow: hidden;
+        background-color: #525659;
+
+        .real-pdf-iframe {
+          width: 100%;
+          height: 480px;
+          border: none;
+          background-color: #ffffff;
+        }
+
+        .pdf-viewer-bar {
+          display: flex;
+          justify-content: flex-end;
+          padding: 0.6rem 1rem;
+          background-color: var(--bg-tarjetas-secundario);
+          border-top: 1px solid var(--borde-tarjetas);
+
+          .btn-open-pdf-external {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.4rem;
+            color: var(--color-primario);
+            font-size: 0.82rem;
+            font-weight: 600;
+            text-decoration: none;
+            padding: 0.3rem 0.6rem;
+            border-radius: 4px;
+            transition: all 0.2s;
+
+            &:hover {
+              background-color: rgba(0, 191, 165, 0.1);
+            }
+          }
+        }
+      }
+
       .simulated-doc-frame {
         background-color: #525659;
         border: 1px solid var(--borde-tarjetas);

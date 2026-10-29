@@ -3,7 +3,7 @@ import { CommonModule } from '@angular/common';
 import { RouterModule, Router } from '@angular/router';
 import { HttpClient } from '@angular/common/http';
 import { MatIconModule } from '@angular/material/icon';
-import { AuthService } from '../../services/auth.service';
+import { AuthService, getApiBaseUrl } from '../../services/auth.service';
 
 export interface UsuarioPostulanteBD {
   id: number;
@@ -60,8 +60,8 @@ export class AdminPostulantesComponent implements OnInit {
 
   cargarPostulantesBD(): void {
     this.cargando = true;
-    const urlUsuarios = `http://127.0.0.1:8000/api/usuarios/?rol=POSTULANTE&_t=${Date.now()}`;
-    const urlPostulaciones = `http://127.0.0.1:8000/api/postulaciones/?_t=${Date.now()}`;
+    const urlUsuarios = `${getApiBaseUrl()}/api/usuarios/?rol=POSTULANTE&_t=${Date.now()}`;
+    const urlPostulaciones = `${getApiBaseUrl()}/api/postulaciones/?_t=${Date.now()}`;
 
     this.http.get<UsuarioPostulanteBD[]>(urlUsuarios).subscribe({
       next: (usuarios) => {
@@ -92,11 +92,15 @@ export class AdminPostulantesComponent implements OnInit {
               }
             });
 
+            // Orden ascendente natural por ID (1, 2, 3...)
+            listaUsuarios.sort((a, b) => a.id - b.id);
+
             this.postulantes = listaUsuarios;
             this.cargando = false;
             this.cdr.detectChanges();
           },
           error: () => {
+            listaUsuarios.sort((a, b) => a.id - b.id);
             this.postulantes = listaUsuarios;
             this.cargando = false;
             this.cdr.detectChanges();
