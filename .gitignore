@@ -1,0 +1,58 @@
+# ==========================================
+# Frontend (Angular)
+# ==========================================
+**/node_modules/
+**/dist/
+**/.angular/
+**/tmp/
+**/out-tsc/
+**/bazel-out/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# ==========================================
+# Backend (Python / Django)
+# ==========================================
+**/venv/
+**/env/
+**/ENV/
+**/.venv/
+**/__pycache__/
+*.py[cod]
+*$py.class
+*.sqlite3
+*.db
+
+# Archivos multimedia subidos (CVs de prueba)
+**/media/cvs/*
+!**/media/cvs/.gitkeep
+
+# ==========================================
+# Entornos locales y secretos
+# ==========================================
+.env
+.env.local
+.env.*.local
+
+# ==========================================
+# IDEs y Editores
+# ==========================================
+.idea/
+.vscode/*
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+!.vscode/extensions.json
+*.sublime-workspace
+*.sublime-project
+
+# ==========================================
+# Sistema Operativo y Logs
+# ==========================================
+.DS_Store
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+$RECYCLE.BIN/
+*.log

@@ -1,0 +1,603 @@
+<!-- Barra de navegacion -->
+<nav class="navbar">
+  <div class="logo-container">
+    <a routerLink="/inicio" class="logo-link">
+      <div class="logo-slot" title="Logo Institucional ISTS">
+        <img src="logos/ISTS.svg" alt="Instituto Superior Tecnológico Sudamericano" class="logo-img" />
+      </div>
+      <div class="system-branding">
+        <h2 class="logo">Evaluaciones <span>Docentes</span></h2>
+        <span class="sub-brand">Evaluación de Docentes</span>
+      </div>
+    </a>
+  </div>
+
+  <div class="nav-links">
+    <a routerLink="/inicio" class="nav-link">
+      <mat-icon class="icon-small">home</mat-icon>
+      <span>Inicio</span>
+    </a>
+    <a *ngIf="authService.tieneRol(['ADMIN_TECNICO', 'TALENTO_HUMANO'])" routerLink="/crear-convocatoria" class="nav-link">
+      <mat-icon class="icon-small">add_circle_outline</mat-icon>
+      <span>Nueva Convocatoria</span>
+    </a>
+    <a *ngIf="authService.tieneRol(['TALENTO_HUMANO', 'VICERRECTORADO', 'COORDINADOR'])" routerLink="/preseleccion" class="nav-link">
+      <mat-icon class="icon-small">dashboard</mat-icon>
+      <span>Preselección</span>
+    </a>
+    <a *ngIf="authService.tieneRol(['RECTORADO', 'TALENTO_HUMANO'])" routerLink="/ranking" class="nav-link">
+      <mat-icon class="icon-small">workspace_premium</mat-icon>
+      <span>Ranking Final</span>
+    </a>
+
+    <!-- Evaluador actual -->
+    <div class="evaluator-pill" title="Rol del evaluador activo">
+      <div class="evaluator-avatar">
+        <mat-icon class="icon-xs">verified_user</mat-icon>
+      </div>
+      <div class="evaluator-info">
+        <span class="evaluator-name">{{ evaluador.nombre }}</span>
+        <span class="evaluator-role">{{ evaluador.rol }}</span>
+      </div>
+    </div>
+
+    <!-- Modo oscuro al lado de Salir -->
+    <button class="theme-toggle" (click)="toggleTheme()" title="Cambiar tema">
+      <mat-icon>{{ isDarkMode ? 'light_mode' : 'dark_mode' }}</mat-icon>
+    </button>
+
+    <!-- Salir -->
+    <button class="btn-logout" (click)="cerrarSesion()" title="Cerrar Sesión">
+      <mat-icon class="icon-small">logout</mat-icon>
+      <span>Salir</span>
+    </button>
+  </div>
+</nav>
+
+<!-- Lista de docentes convocados -->
+@if (!docenteSeleccionado) {
+  <section class="docentes-list-section">
+    
+    <!-- Cabecera de la lista -->
+    <header class="list-header-banner">
+      <div class="banner-content">
+        <h1>Evaluación de Docentes</h1>
+        <p class="banner-desc">
+          Selecciona un docente para calificar su clase demostrativa y registrar su puntuación.
+        </p>
+
+        <!-- Indicadores rapidos -->
+        <div class="kpi-row">
+          <div class="kpi-chip">
+            <span class="kpi-num">{{ docentes.length }}</span>
+            <span class="kpi-txt">Total Convocados</span>
+          </div>
+          <div class="kpi-chip warning">
+            <span class="kpi-num">{{ contarPorEstadoDocente('Pendiente') }}</span>
+            <span class="kpi-txt">Pendientes</span>
+          </div>
+          <div class="kpi-chip info">
+            <span class="kpi-num">{{ contarPorEstadoDocente('En Evaluación') }}</span>
+            <span class="kpi-txt">En Evaluación</span>
+          </div>
+          <div class="kpi-chip success">
+            <span class="kpi-num">{{ contarPorEstadoDocente('Calificada') }}</span>
+            <span class="kpi-txt">Calificadas</span>
+          </div>
+        </div>
+      </div>
+    </header>
+
+    <!-- Area de docentes -->
+    <div class="list-workspace">
+      
+      <!-- Barra de busqueda y filtros -->
+      <div class="list-toolbar">
+        <div class="search-box">
+          <mat-icon class="icon-search">search</mat-icon>
+          <input
+            type="text"
+            [(ngModel)]="busquedaDocente"
+            placeholder="Buscar por nombre, cédula, carrera o tema de clase..."
+            class="input-search"
+          />
+          @if (busquedaDocente) {
+            <button class="btn-clear" (click)="busquedaDocente = ''" title="Limpiar búsqueda">
+              <mat-icon class="icon-xs">close</mat-icon>
+            </button>
+          }
+        </div>
+
+        <div class="status-filter-pills">
+          <button
+            type="button"
+            class="pill-btn"
+            [class.active]="filtroEstadoDocente === 'Todos'"
+            (click)="filtroEstadoDocente = 'Todos'">
+            Todos
+          </button>
+          <button
+            type="button"
+            class="pill-btn"
+            [class.active]="filtroEstadoDocente === 'Pendiente'"
+            (click)="filtroEstadoDocente = 'Pendiente'">
+            Pendientes
+          </button>
+          <button
+            type="button"
+            class="pill-btn"
+            [class.active]="filtroEstadoDocente === 'En Evaluación'"
+            (click)="filtroEstadoDocente = 'En Evaluación'">
+            En Evaluación
+          </button>
+          <button
+            type="button"
+            class="pill-btn"
+            [class.active]="filtroEstadoDocente === 'Calificada'"
+            (click)="filtroEstadoDocente = 'Calificada'">
+            Calificadas
+          </button>
+        </div>
+      </div>
+
+      <!-- Tarjetas de docentes -->
+      @if (docentesFiltrados.length > 0) {
+        <div class="docentes-grid">
+          @for (docente of docentesFiltrados; track docente.id) {
+            <article class="docente-card" (click)="seleccionarDocente(docente)">
+              
+              <!-- Cabecera de la tarjeta -->
+              <div class="docente-card-top">
+                <div class="docente-avatar-box">
+                  <div class="avatar-circle">{{ docente.iniciales }}</div>
+                  <div class="docente-id-block">
+                    <h3 class="docente-nombre">{{ docente.nombres }} {{ docente.apellidos }}</h3>
+                    <span class="docente-id">CI: {{ docente.cedula }} • {{ docente.correo }}</span>
+                  </div>
+                </div>
+
+                <span
+                  class="status-badge"
+                  [ngClass]="docente.estado === 'Calificada' ? 'badge-calificada' : (docente.estado === 'En Evaluación' ? 'badge-evaluacion' : 'badge-pendiente')">
+                  {{ docente.estado }}
+                </span>
+              </div>
+
+              <!-- Informacion de la clase -->
+              <div class="docente-card-body">
+                <div class="meta-line">
+                  <mat-icon class="icon-xs">school</mat-icon>
+                  <span>{{ docente.carrera }}</span>
+                </div>
+                <div class="meta-line sub-line">
+                  <mat-icon class="icon-xs">menu_book</mat-icon>
+                  <span>Asignatura: {{ docente.asignatura }}</span>
+                </div>
+
+                <div class="topic-box">
+                  <span class="topic-label">Tema Asignado de la Clase:</span>
+                  <p class="topic-text">"{{ docente.temaClase }}"</p>
+                </div>
+
+                <div class="schedule-chips">
+                  <span class="chip-info">
+                    <mat-icon class="icon-xs">calendar_today</mat-icon>
+                    {{ docente.fechaHora }}
+                  </span>
+                  <span class="chip-info">
+                    <mat-icon class="icon-xs">apartment</mat-icon>
+                    {{ docente.laboratorio }}
+                  </span>
+                </div>
+              </div>
+
+              <!-- Estado de calificacion -->
+              <div class="docente-card-bottom">
+                <div class="score-preview">
+                  @if (docente.promedioActual !== undefined) {
+                    <span class="score-label">Nota Asentada:</span>
+                    <strong class="score-val">{{ docente.promedioActual }} / 100</strong>
+                  } @else {
+                    <span class="score-label">Estado:</span>
+                    <span class="score-pending">Pendiente de calificar</span>
+                  }
+                </div>
+
+                <button
+                  type="button"
+                  class="btn-evaluar-action"
+                  (click)="seleccionarDocente(docente); $event.stopPropagation()">
+                  @if (docente.estado === 'Calificada') {
+                    <span>Ver Rúbrica</span>
+                  } @else {
+                    <span>Evaluar Docente</span>
+                  }
+                  <mat-icon class="icon-xs">arrow_forward</mat-icon>
+                </button>
+              </div>
+
+            </article>
+          }
+        </div>
+      } @else {
+        <!-- Cuando no hay docentes -->
+        <div class="empty-state">
+          <mat-icon class="empty-icon">search_off</mat-icon>
+          <h3>No se encontraron docentes</h3>
+          <p>No hay candidatos convocados que coincidan con los criterios de búsqueda seleccionados.</p>
+          <button class="btn-reset" (click)="busquedaDocente = ''; filtroEstadoDocente = 'Todos'">
+            Limpiar Filtros
+          </button>
+        </div>
+      }
+
+    </div>
+
+  </section>
+}
+
+<!-- Rubrica de calificacion -->
+@if (docenteSeleccionado) {
+  
+  <!-- Barra para volver a la lista -->
+  <div class="rubric-nav-bar">
+    <div class="nav-bar-content">
+      <button type="button" class="btn-return-list" (click)="volverALista()">
+        <mat-icon class="icon-sm">arrow_back</mat-icon>
+        <span>Volver al Listado de Docentes</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- Cabecera de evaluacion -->
+  <header class="evaluation-header">
+    <div class="header-content">
+      <div class="header-title-row">
+        <div>
+          <h1>Rúbrica de Calificación Docente</h1>
+          <p class="header-desc">
+            Asigna la puntuación individual para cada uno de los 5 criterios normados por el ISTS. El promedio y la clasificación cualitativa se actualizarán en tiempo real.
+          </p>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <!-- Contenedor de evaluacion -->
+  <main class="evaluation-container">
+    
+    <!-- Columna de criterios -->
+    <section class="evaluation-main-column">
+      
+      <!-- Datos del docente evaluado -->
+      <article class="candidate-summary-card">
+        <div class="candidate-left">
+          
+          <!-- Foto o iniciales del docente -->
+          <div class="candidate-photo-slot" title="Fotografía del candidato">
+            @if (docenteSeleccionado.fotoUrl) {
+              <img [src]="docenteSeleccionado.fotoUrl" [alt]="docenteSeleccionado.nombres" class="candidate-img" />
+            } @else {
+              <div class="candidate-initials-badge">
+                <span>{{ docenteSeleccionado.iniciales }}</span>
+                <mat-icon class="camera-hint">photo_camera</mat-icon>
+              </div>
+            }
+          </div>
+
+          <div class="candidate-profile-meta">
+            <div class="name-status-row">
+              <h3>{{ docenteSeleccionado.nombres }} {{ docenteSeleccionado.apellidos }}</h3>
+              <span
+                class="badge-status-eval"
+                [ngClass]="docenteSeleccionado.estado === 'Calificada' ? 'badge-calificada' : (docenteSeleccionado.estado === 'En Evaluación' ? 'badge-evaluacion' : 'badge-pendiente')">
+                {{ docenteSeleccionado.estado }}
+              </span>
+            </div>
+            <p class="candidate-degree">
+              <mat-icon class="icon-xs">school</mat-icon>
+              {{ docenteSeleccionado.carrera }} • Asignatura: {{ docenteSeleccionado.asignatura }}
+            </p>
+            <p class="candidate-contact">
+              <span>CI: {{ docenteSeleccionado.cedula }}</span>
+              <span class="dot-separator">•</span>
+              <span>{{ docenteSeleccionado.correo }}</span>
+            </p>
+          </div>
+        </div>
+
+        <!-- Detalles de la clase -->
+        <div class="session-details-block">
+          <div class="detail-row">
+            <mat-icon class="icon-sm">cast_for_education</mat-icon>
+            <div>
+              <span class="detail-label">Tema Asignado de la Clase:</span>
+              <span class="detail-title">"{{ docenteSeleccionado.temaClase }}"</span>
+            </div>
+          </div>
+
+          <div class="session-meta-chips">
+            <span class="chip-item">
+              <mat-icon class="icon-xs">calendar_today</mat-icon>
+              {{ docenteSeleccionado.fechaHora }}
+            </span>
+            <span class="chip-item">
+              <mat-icon class="icon-xs">apartment</mat-icon>
+              {{ docenteSeleccionado.laboratorio }}
+            </span>
+            <span class="chip-item">
+              <mat-icon class="icon-xs">badge</mat-icon>
+              {{ docenteSeleccionado.modalidad }}
+            </span>
+          </div>
+        </div>
+      </article>
+
+      <!-- Criterios de evaluacion -->
+      <div class="criteria-card-wrapper">
+        <div class="criteria-header-bar">
+          <div class="criteria-title-group">
+            <mat-icon class="icon-sm">rule</mat-icon>
+            <h3>Criterios de Evaluación Pedagógica</h3>
+          </div>
+          <span class="scale-note">Escala: 0 a 100 puntos por criterio</span>
+        </div>
+
+        <div class="criteria-list">
+          @for (criterio of criterios; track criterio.id; let idx = $index) {
+            <div class="criterio-card">
+              
+              <div class="criterio-top">
+                <div class="criterio-info">
+                  <div class="criterio-number-icon">
+                    <mat-icon class="icon-sm">{{ criterio.icono }}</mat-icon>
+                  </div>
+                  <div>
+                    <div class="criterio-heading">
+                      <h4>{{ idx + 1 }}. {{ criterio.nombre }}</h4>
+                      <span class="weight-tag">20% peso relativo</span>
+                    </div>
+                    <p class="criterio-desc">{{ criterio.descripcion }}</p>
+                  </div>
+                </div>
+
+                <!-- Input de nota -->
+                <div class="criterio-input-box">
+                  <input
+                    type="number"
+                    min="0"
+                    max="100"
+                    [(ngModel)]="criterio.puntaje"
+                    (ngModelChange)="validarRango(criterio)"
+                    class="score-number-input"
+                    title="Puntuación de 0 a 100"
+                  />
+                  <span class="score-unit">/100</span>
+                </div>
+              </div>
+
+              <!-- Slider para la nota -->
+              <div class="slider-control-row">
+                <input
+                  type="range"
+                  min="0"
+                  max="100"
+                  step="1"
+                  [(ngModel)]="criterio.puntaje"
+                  class="score-range-slider"
+                  [style.--fill-percent.%]="criterio.puntaje"
+                />
+              </div>
+
+              <!-- Botones de valores rapidos -->
+              <div class="criterio-footer">
+                <div class="presets-group">
+                  <span class="presets-label">Presets:</span>
+                  <button
+                    type="button"
+                    class="preset-btn"
+                    [class.active]="criterio.puntaje === 70"
+                    (click)="asignarPreset(criterio, 70)">
+                    70 - Aceptable
+                  </button>
+                  <button
+                    type="button"
+                    class="preset-btn"
+                    [class.active]="criterio.puntaje === 85"
+                    (click)="asignarPreset(criterio, 85)">
+                    85 - Bueno
+                  </button>
+                  <button
+                    type="button"
+                    class="preset-btn"
+                    [class.active]="criterio.puntaje === 95"
+                    (click)="asignarPreset(criterio, 95)">
+                    95 - Sobresaliente
+                  </button>
+                  <button
+                    type="button"
+                    class="preset-btn highlight"
+                    [class.active]="criterio.puntaje === 100"
+                    (click)="asignarPreset(criterio, 100)">
+                    100 - Excelente
+                  </button>
+                </div>
+
+                <div class="current-eval-state">
+                  @if (criterio.puntaje >= 90) {
+                    <span class="status-dot green">Excelente</span>
+                  } @else if (criterio.puntaje >= 75) {
+                    <span class="status-dot teal">Bueno</span>
+                  } @else if (criterio.puntaje >= 60) {
+                    <span class="status-dot amber">Regular</span>
+                  } @else {
+                    <span class="status-dot red">Insuficiente</span>
+                  }
+                </div>
+              </div>
+
+            </div>
+          }
+        </div>
+      </div>
+
+      <!-- Observaciones -->
+      <div class="observations-card">
+        <div class="obs-header">
+          <mat-icon class="icon-sm">rate_review</mat-icon>
+          <div>
+            <h3>Observaciones del Evaluador</h3>
+            <p class="obs-subtitle">Registra aspectos destacados, retroalimentación pedagógica y recomendaciones para el dictamen final.</p>
+          </div>
+        </div>
+
+        <div class="obs-input-wrapper">
+          <textarea
+            rows="4"
+            [(ngModel)]="observaciones"
+            placeholder="Escribe aquí las observaciones cualitativas sobre la clase demostrativa..."
+            class="obs-textarea"
+          ></textarea>
+          <span class="chars-note">Este informe constará en el acta oficial de calificación.</span>
+        </div>
+      </div>
+
+    </section>
+
+    <!-- Resumen y nota final -->
+    <aside class="evaluation-sidebar">
+      
+      <div class="sticky-score-card">
+        
+        <div class="score-card-header">
+          <span class="card-tag">EVALUACIÓN EN CURSO</span>
+          <h3>Calificación Consolidada</h3>
+        </div>
+
+        <!-- Promedio calculado -->
+        <div class="live-score-display">
+          <div class="radial-score-box">
+            <div class="score-big-number">{{ promedioCalculado }}</div>
+            <div class="score-base-label">de 100 puntos</div>
+          </div>
+
+          <!-- Clasificacion -->
+          <div class="verdict-chip" [ngClass]="clasificacion.clase">
+            <mat-icon class="icon-xs">{{ clasificacion.icono }}</mat-icon>
+            <span>{{ clasificacion.texto }}</span>
+          </div>
+
+          <p class="verdict-desc">{{ clasificacion.descripcion }}</p>
+        </div>
+
+        <!-- Desglose por criterios -->
+        <div class="criteria-mini-breakdown">
+          <span class="breakdown-title">Desglose de Puntuación:</span>
+          <div class="breakdown-list">
+            @for (c of criterios; track c.id) {
+              <div class="breakdown-item">
+                <div class="item-labels">
+                  <span class="crit-name">{{ c.nombre }}</span>
+                  <span class="crit-val">{{ c.puntaje }} pts</span>
+                </div>
+                <div class="mini-bar-track">
+                  <div class="mini-bar-fill" [style.width.%]="c.puntaje"></div>
+                </div>
+              </div>
+            }
+          </div>
+        </div>
+
+        <!-- Ponderacion del 50 por ciento -->
+        <div class="weighting-card">
+          <div class="weight-head">
+            <mat-icon class="icon-xs">analytics</mat-icon>
+            <span>Ponderación Oficial ISTS</span>
+          </div>
+          <p class="weight-body">
+            La <strong>Clase Demostrativa</strong> equivale al <strong>50%</strong> de la nota ponderada final del candidato.
+          </p>
+          <div class="weighted-result-box">
+            <span class="res-label">Aporte a la Nota Final:</span>
+            <span class="res-val">{{ aportePonderado }} / 50 pts</span>
+          </div>
+        </div>
+
+        <!-- Botones para guardar -->
+        <div class="action-buttons-stack">
+          <button
+            type="button"
+            class="btn-save-score"
+            [disabled]="guardando"
+            (click)="guardarCalificacion()">
+            @if (!guardando) {
+              <mat-icon>save</mat-icon>
+              <span>Guardar Calificación</span>
+            } @else {
+              <span class="spinner"></span>
+              <span>Guardando evaluación...</span>
+            }
+          </button>
+
+          <button
+            type="button"
+            class="btn-draft"
+            (click)="guardarBorrador()">
+            <mat-icon class="icon-xs">drafts</mat-icon>
+            <span>Guardar como Borrador</span>
+          </button>
+        </div>
+
+        <div class="security-seal">
+          <mat-icon class="icon-xs">security</mat-icon>
+          <span>Firmado digitalmente por {{ evaluador.rol }}</span>
+        </div>
+
+      </div>
+
+    </aside>
+
+  </main>
+
+  <!-- Modal de confirmacion -->
+  @if (evaluacionGuardada) {
+    <div class="modal-backdrop">
+      <div class="modal-card">
+        <div class="modal-icon-wrap">
+          <mat-icon class="success-icon">fact_check</mat-icon>
+        </div>
+
+        <h2>¡Calificación Registrada con Éxito!</h2>
+        <p class="modal-text">
+          Se ha asentado oficialmente la evaluación de la Clase Demostrativa para el docente <strong>{{ docenteSeleccionado.nombres }} {{ docenteSeleccionado.apellidos }}</strong>.
+        </p>
+
+        <div class="score-summary-modal">
+          <div class="summary-stat">
+            <span class="stat-lbl">Promedio Final:</span>
+            <span class="stat-big-val">{{ promedioCalculado }} / 100</span>
+          </div>
+          <div class="summary-stat">
+            <span class="stat-lbl">Dictamen Cualitativo:</span>
+            <span class="verdict-chip inline" [ngClass]="clasificacion.clase">
+              {{ clasificacion.texto }}
+            </span>
+          </div>
+          <div class="summary-stat">
+            <span class="stat-lbl">Aporte Ponderado - 50%:</span>
+            <span class="stat-val-highlight">{{ aportePonderado }} pts</span>
+          </div>
+        </div>
+
+        <div class="modal-actions">
+          <button class="btn-modal-primary" (click)="cerrarModal(true)">
+            Volver al Listado de Docentes
+          </button>
+          <button class="btn-modal-secondary" (click)="cerrarModal(false)">
+            Continuar en la Rúbrica
+          </button>
+        </div>
+      </div>
+    </div>
+  }
+}

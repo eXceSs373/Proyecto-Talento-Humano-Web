@@ -1,0 +1,314 @@
+@import "@angular/material/prebuilt-themes/azure-blue.css";
+
+// Variables para modo Claro
+:root {
+  --bg-principal: #f4f6f8;
+  --bg-tarjetas: #ffffff;
+  --borde-tarjetas: #e0e0e0;
+  --fondo-tips: #171717;
+
+  --texto-principal: #333333;
+  --texto-secundario: #666666;
+  --texto-placeholder: #777777;
+  --texto-invertido: #ffffff;
+
+  --color-primario: #00bfa5;
+  --color-hover: #009688;
+  --color-secundario: #5df2d6;
+  --bg-input: #ffffff;
+  --bg-btn-secundario: #f0f0f0;
+}
+
+// Variables para modo Oscuro
+body.dark-theme {
+  --bg-principal: #121212;
+  --bg-tarjetas: #1e1e1e;
+  --borde-tarjetas: rgba(255, 255, 255, 0.1);
+  --fondo-tips: #e4e4e4;
+
+  --texto-principal: #ffffff;
+  --texto-secundario: #b8c4d1;
+  --texto-placeholder: #a5b3c2;
+  --texto-invertido: #000000;
+
+  --color-primario: #00d6b9;
+  --color-hover: #00a892;
+  --color-secundario: #6afb98;
+  --bg-input: #2c2c2c;
+  --bg-btn-secundario: rgba(255, 255, 255, 0.1);
+}
+
+html {
+  scroll-behavior: smooth;
+  box-sizing: border-box;
+}
+
+*, *::before, *::after {
+  box-sizing: inherit;
+}
+
+body {
+  min-height: 100vh;
+  margin: 0;
+  font-family: 'Poppins', "Helvetica Neue", sans-serif;
+  background-color: var(--bg-principal);
+  color: var(--texto-principal);
+  overflow-x: hidden;
+  transition: background-color 0.4s ease, color 0.4s ease;
+}
+
+// Estilos globales para pestañas de Angular Material - Panel Administrativo
+.mat-mdc-tab-group {
+  --mat-tab-header-active-label-text-color: var(--color-primario);
+  --mat-tab-header-inactive-label-text-color: var(--texto-secundario);
+  --mat-tab-header-active-indicator-color: var(--color-primario);
+
+  .mat-mdc-tab {
+    font-family: inherit !important;
+
+    .mdc-tab__text-label {
+      font-size: 0.94rem;
+      font-weight: 500;
+      color: var(--texto-principal) !important;
+      transition: color 0.2s ease;
+    }
+
+    &.mdc-tab--active .mdc-tab__text-label {
+      color: var(--color-primario) !important;
+      font-weight: 600;
+    }
+  }
+}
+
+// Estilos para selects en toda la aplicacion con flecha comoda y margen natural
+select, .select-control, .input-control.select-control, .select-process, .demo-select {
+  appearance: none !important;
+  -webkit-appearance: none !important;
+  -moz-appearance: none !important;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%23777777' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E") !important;
+  background-repeat: no-repeat !important;
+  background-position: calc(100% - 1.1rem) center !important;
+  background-size: 1rem !important;
+  padding-right: 2.8rem !important;
+  cursor: pointer;
+}
+
+// Asegurar renderizado correcto de todos los iconos de Angular Material
+.mat-icon {
+  font-family: 'Material Icons', 'Material Symbols Outlined' !important;
+  font-weight: normal;
+  font-style: normal;
+  line-height: 1;
+  display: inline-block;
+  white-space: nowrap;
+  word-wrap: normal;
+  direction: ltr;
+  letter-spacing: normal;
+  text-transform: none;
+  vertical-align: middle;
+}
+
+// Animacion de giro
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.spin-icon {
+  animation: spin 1.5s linear infinite;
+}
+
+// Control de desbordamiento de texto para parrafos, titulos y contenedores con texto libre
+p, .vacante-desc, .vacante-heading, .break-text {
+  overflow-wrap: anywhere;
+  word-break: break-word;
+}
+
+// Estilos globales de la barra de navegación para todas las vistas (tamaño compacto y sin cortes de palabras)
+.navbar {
+  padding: 0.65rem 1.8rem !important;
+
+  .logo-container {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+
+    .logo-link {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.65rem;
+      text-decoration: none;
+    }
+
+    .logo-slot {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .logo-img {
+      height: 38px;
+      max-height: 38px;
+      width: auto;
+      object-fit: contain;
+      display: block;
+      transition: all 0.25s ease;
+    }
+
+    .logo {
+      margin: 0;
+      font-size: 1.12rem;
+      font-weight: 700;
+      color: var(--texto-principal);
+      display: inline-flex;
+      align-items: center;
+      gap: 0.35rem;
+
+      span {
+        color: var(--texto-principal);
+        font-weight: 600;
+      }
+    }
+  }
+
+  .nav-links {
+    gap: 0.45rem !important;
+    align-items: center !important;
+
+    .nav-link {
+      font-size: 10.5px !important;
+      padding: 0.35rem 0.6rem !important;
+      gap: 0.35rem !important;
+      white-space: nowrap !important;
+      word-break: keep-all !important;
+      overflow-wrap: normal !important;
+      flex-shrink: 0 !important;
+
+      span {
+        font-size: 10.5px !important;
+        white-space: nowrap !important;
+        word-break: keep-all !important;
+        overflow-wrap: normal !important;
+      }
+
+      mat-icon, .icon-small {
+        font-size: 14px !important;
+        width: 14px !important;
+        height: 14px !important;
+        line-height: 14px !important;
+      }
+    }
+
+    .theme-toggle {
+      width: 30px !important;
+      height: 30px !important;
+      min-width: 30px !important;
+      flex-shrink: 0 !important;
+
+      mat-icon {
+        font-size: 15px !important;
+        width: 15px !important;
+        height: 15px !important;
+        line-height: 15px !important;
+      }
+    }
+
+    .btn-acceder {
+      font-size: 10.5px !important;
+      padding: 0.35rem 0.75rem !important;
+      gap: 0.35rem !important;
+      white-space: nowrap !important;
+      word-break: keep-all !important;
+      overflow-wrap: normal !important;
+      flex-shrink: 0 !important;
+
+      span {
+        font-size: 10.5px !important;
+        white-space: nowrap !important;
+        word-break: keep-all !important;
+      }
+
+      mat-icon, .icon-small {
+        font-size: 14px !important;
+        width: 14px !important;
+        height: 14px !important;
+        line-height: 14px !important;
+      }
+    }
+
+    .user-chip {
+      padding: 0.25rem 0.65rem !important;
+      gap: 0.45rem !important;
+      white-space: nowrap !important;
+      word-break: keep-all !important;
+      overflow-wrap: normal !important;
+      flex-shrink: 0 !important;
+
+      .avatar-circle {
+        mat-icon {
+          font-size: 16px !important;
+          width: 16px !important;
+          height: 16px !important;
+          line-height: 16px !important;
+        }
+      }
+
+      .user-chip-info {
+        .user-name {
+          font-size: 10.5px !important;
+          white-space: nowrap !important;
+          word-break: keep-all !important;
+          overflow-wrap: normal !important;
+          line-height: 1.2 !important;
+        }
+
+        .user-badge {
+          font-size: 9px !important;
+          white-space: nowrap !important;
+          word-break: keep-all !important;
+          overflow-wrap: normal !important;
+          line-height: 1.2 !important;
+        }
+      }
+    }
+
+    .btn-logout {
+      font-size: 10.5px !important;
+      padding: 0.35rem 0.65rem !important;
+      gap: 0.3rem !important;
+      white-space: nowrap !important;
+      word-break: keep-all !important;
+      overflow-wrap: normal !important;
+      flex-shrink: 0 !important;
+
+      span {
+        font-size: 10.5px !important;
+        white-space: nowrap !important;
+        word-break: keep-all !important;
+        overflow-wrap: normal !important;
+      }
+
+      mat-icon, .icon-small {
+        font-size: 14px !important;
+        width: 14px !important;
+        height: 14px !important;
+        line-height: 14px !important;
+      }
+    }
+  }
+}
+
+// En modo oscuro, resaltar de forma limpia y legible el logo institucional
+body.dark-theme .navbar .logo-container .logo-img {
+  background-color: #ffffff;
+  padding: 2px 5px;
+  border-radius: 6px;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.35);
+}
+
+
+

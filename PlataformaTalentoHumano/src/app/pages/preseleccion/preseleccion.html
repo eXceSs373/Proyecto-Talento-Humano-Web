@@ -1,0 +1,608 @@
+<!-- Barra de navegacion -->
+<nav class="navbar">
+  <div class="logo-container">
+    <a routerLink="/inicio" class="logo-link">
+      <img src="logos/ISTS.svg" alt="Instituto Superior Tecnológico Sudamericano" class="logo-img" />
+      <h2 class="logo"><span>Talento Humano</span></h2>
+    </a>
+    <span class="nav-divider">/</span>
+    <span class="nav-current-module">Preselección de Personal</span>
+  </div>
+
+  <div class="nav-links">
+    <a routerLink="/inicio" class="nav-link">
+      <mat-icon class="icon-small">home</mat-icon>
+      <span>Convocatorias</span>
+    </a>
+    <a *ngIf="authService.tieneRol(['ADMIN_TECNICO', 'TALENTO_HUMANO'])" routerLink="/crear-convocatoria" class="nav-link">
+      <mat-icon class="icon-small">add_circle_outline</mat-icon>
+      <span>Nueva Convocatoria</span>
+    </a>
+    <a *ngIf="authService.tieneRol(['RECTORADO', 'VICERRECTORADO', 'BIENESTAR', 'COORDINADOR'])" routerLink="/evaluacion" class="nav-link">
+      <mat-icon class="icon-small">fact_check</mat-icon>
+      <span>Evaluaciones</span>
+    </a>
+    <a *ngIf="authService.tieneRol(['RECTORADO', 'TALENTO_HUMANO'])" routerLink="/ranking" class="nav-link">
+      <mat-icon class="icon-small">workspace_premium</mat-icon>
+      <span>Ranking Final</span>
+    </a>
+    <a *ngIf="authService.tieneRol(['ADMIN_TECNICO'])" href="http://127.0.0.1:8000/admin/" target="_blank" class="nav-link">
+      <mat-icon class="icon-small">admin_panel_settings</mat-icon>
+      <span>Django Admin</span>
+    </a>
+
+    <!-- Usuario logueado -->
+    <div class="user-chip" *ngIf="authService.usuarioActual() as usuario" title="Usuario activo">
+      <div class="avatar-circle">
+        <mat-icon class="icon-xs">account_circle</mat-icon>
+      </div>
+      <div class="user-chip-info">
+        <span class="user-name">{{ usuario.nombre }}</span>
+        <span class="user-badge">{{ usuario.nombreRol }}</span>
+      </div>
+    </div>
+
+    <!-- Modo oscuro al lado de Salir -->
+    <button class="theme-toggle" (click)="toggleTheme()" title="Cambiar tema">
+      <mat-icon>{{ isDarkMode ? 'light_mode' : 'dark_mode' }}</mat-icon>
+    </button>
+
+    <!-- Salir -->
+    <button class="btn-logout" (click)="cerrarSesion()" title="Cerrar Sesión">
+      <mat-icon class="icon-small">logout</mat-icon>
+      <span>Salir</span>
+    </button>
+  </div>
+</nav>
+
+<!-- Cabecera y metricas -->
+<header class="dashboard-header">
+  <div class="header-content">
+    <div class="title-area">
+      <h1>Revisión y Preselección de Postulantes</h1>
+      <p>Revisión de hojas de vida y selección de candidatos para entrevistas y clases demostrativas.</p>
+    </div>
+
+    <!-- Tarjetas de resumen -->
+    <div class="kpi-grid">
+      <div class="kpi-card">
+        <span class="kpi-label">Total Carpetas</span>
+        <span class="kpi-value">{{ totalPostulantes }}</span>
+      </div>
+
+      <div class="kpi-card highlight-success">
+        <span class="kpi-label">Preseleccionadas</span>
+        <span class="kpi-value">{{ contarPorEstado('Preseleccionada') }}</span>
+      </div>
+
+      <div class="kpi-card highlight-warning">
+        <span class="kpi-label">En Revisión</span>
+        <span class="kpi-value">{{ contarPorEstado('En revisión') }}</span>
+      </div>
+
+      <div class="kpi-card highlight-primary">
+        <span class="kpi-label">Promedio Afinidad</span>
+        <span class="kpi-value">{{ promedioPuntaje }}%</span>
+      </div>
+    </div>
+  </div>
+</header>
+
+<!-- Contenido principal -->
+<main class="workspace-container">
+  
+  <!-- Filtros laterales -->
+  <aside class="sidebar-filtros">
+    <div class="sidebar-header">
+      <div class="sidebar-title">
+        <mat-icon class="icon-sm">tune</mat-icon>
+        <h3>Filtros</h3>
+      </div>
+      <button class="btn-text-action" (click)="limpiarFiltros()" title="Restablecer filtros">
+        Limpiar
+      </button>
+    </div>
+
+    <!-- Buscador -->
+    <div class="filter-group">
+      <label class="filter-label" for="inputBusqueda">Buscar Candidato</label>
+      <div class="input-search-wrapper">
+        <mat-icon class="search-icon">search</mat-icon>
+        <input
+          id="inputBusqueda"
+          type="text"
+          [(ngModel)]="busqueda"
+          placeholder="Nombre"
+          class="filter-input"
+        />
+        @if (busqueda) {
+          <button class="clear-search" (click)="busqueda = ''" title="Borrar texto">
+            <mat-icon class="icon-xs">close</mat-icon>
+          </button>
+        }
+      </div>
+    </div>
+
+    <!-- Filtro por estado -->
+    <div class="filter-group">
+      <label class="filter-label">Estado de Postulación</label>
+      <div class="status-chips-list">
+        <button
+          type="button"
+          class="chip-button"
+          [class.active]="filtroEstado === 'Todos'"
+          (click)="filtroEstado = 'Todos'">
+          <span>Todos</span>
+          <span class="chip-count">{{ totalPostulantes }}</span>
+        </button>
+
+        @for (est of estados; track est) {
+          <button
+            type="button"
+            class="chip-button"
+            [class.active]="filtroEstado === est"
+            [ngClass]="'chip-' + obtenerClaseEstado(est)"
+            (click)="filtroEstado = est">
+            <span>{{ est }}</span>
+            <span class="chip-count">{{ contarPorEstado(est) }}</span>
+          </button>
+        }
+      </div>
+    </div>
+
+    <!-- Filtro por carrera -->
+    <div class="filter-group">
+      <label class="filter-label" for="selectCarrera">Carrera / Área</label>
+      <div class="select-wrapper">
+        <select id="selectCarrera" [(ngModel)]="filtroCarrera" class="filter-select">
+          <option value="Todas">Todas las Carreras</option>
+          @for (carr of carreras; track carr) {
+            <option [value]="carr">{{ carr }}</option>
+          }
+        </select>
+        <mat-icon class="select-arrow">expand_more</mat-icon>
+      </div>
+    </div>
+
+    <!-- Filtro por puntaje -->
+    <div class="filter-group">
+      <div class="filter-label-row">
+        <label class="filter-label" for="rangePuntaje">Puntaje Mínimo</label>
+        <span class="score-indicator">{{ filtroPuntajeMin }} pts</span>
+      </div>
+      <input
+        id="rangePuntaje"
+        type="range"
+        min="0"
+        max="100"
+        step="5"
+        [(ngModel)]="filtroPuntajeMin"
+        class="filter-range"
+      />
+      <div class="range-labels">
+        <span>0</span>
+        <span>50</span>
+        <span>100</span>
+      </div>
+    </div>
+
+    <!-- Bandeja para comparar -->
+    @if (candidatosComparar.size > 0) {
+      <div class="compare-tray">
+        <div class="compare-info">
+          <mat-icon class="icon-sm">compare_arrows</mat-icon>
+          <span>{{ candidatosComparar.size }} para comparar</span>
+        </div>
+        <button class="btn-compare-action" (click)="candidatosComparar.clear()">
+          Vaciar selección
+        </button>
+      </div>
+    }
+  </aside>
+
+  <!-- Lista de candidatos -->
+  <section class="main-workplace">
+    
+    <!-- Barra de herramientas -->
+    <div class="toolbar-header">
+      <div class="results-count">
+        Mostrando <strong>{{ postulantesFiltrados.length }}</strong> de {{ totalPostulantes }} postulantes
+      </div>
+
+      <div class="toolbar-actions">
+        <!-- Ordenar -->
+        <div class="sort-selector">
+          <span class="sort-label">Ordenar por:</span>
+          <select [(ngModel)]="ordenSeleccionado" class="sort-select">
+            <option value="puntaje-desc">Mayor Puntaje</option>
+            <option value="puntaje-asc">Menor Puntaje</option>
+            <option value="reciente">Más Reciente</option>
+            <option value="nombre">Nombre A a Z</option>
+          </select>
+        </div>
+
+        <!-- Cambiar vista -->
+        <div class="view-toggle">
+          <button
+            type="button"
+            class="btn-toggle"
+            [class.active]="vistaActual === 'tabla'"
+            (click)="vistaActual = 'tabla'"
+            title="Vista en Tabla">
+            <mat-icon>view_list</mat-icon>
+          </button>
+          <button
+            type="button"
+            class="btn-toggle"
+            [class.active]="vistaActual === 'tarjetas'"
+            (click)="vistaActual = 'tarjetas'"
+            title="Vista en Tarjetas">
+            <mat-icon>grid_view</mat-icon>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Vista en tabla -->
+    @if (vistaActual === 'tabla' && postulantesFiltrados.length > 0) {
+      <div class="table-card">
+        <div class="table-responsive">
+          <table class="modern-table">
+            <thead>
+              <tr>
+                <th class="th-check">
+                  <span class="sr-only">Seleccionar</span>
+                </th>
+                <th class="th-candidate">Postulante</th>
+                <th class="th-career">Carrera y Título</th>
+                <th class="th-date">Fecha</th>
+                <th class="th-score">Afinidad Curricular</th>
+                <th class="th-status">Estado</th>
+                <th class="th-actions">Acciones</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (candidato of postulantesFiltrados; track candidato.id) {
+                <tr class="table-row" (click)="abrirExpediente(candidato)">
+                  
+                  <!-- Checkbox comparar -->
+                  <td class="td-check" (click)="$event.stopPropagation()">
+                    <input
+                      type="checkbox"
+                      [checked]="estaSeleccionadoComparar(candidato.id)"
+                      (change)="toggleComparar(candidato.id)"
+                      title="Comparar candidato"
+                    />
+                  </td>
+
+                  <!-- Datos del candidato -->
+                  <td class="td-candidate">
+                    <div class="candidate-cell">
+                      <div class="avatar-badge">
+                        {{ candidato.avatarIniciales }}
+                      </div>
+                      <div class="candidate-meta">
+                        <span class="candidate-name">{{ candidato.nombres }} {{ candidato.apellidos }}</span>
+                        <span class="candidate-id">CI: {{ candidato.cedula }} • {{ candidato.correo }}</span>
+                      </div>
+                    </div>
+                  </td>
+
+                  <!-- Carrera y titulo -->
+                  <td class="td-career">
+                    <div class="career-cell">
+                      <span class="career-title">{{ candidato.carrera }}</span>
+                      <span class="career-degree">{{ candidato.tituloAcademico }}</span>
+                    </div>
+                  </td>
+
+                  <!-- Fecha -->
+                  <td class="td-date">
+                    <span class="date-text">{{ candidato.fechaPostulacion }}</span>
+                  </td>
+
+                  <!-- Puntaje -->
+                  <td class="td-score">
+                    <div class="score-container">
+                      <div class="score-info">
+                        <span class="score-number">{{ candidato.puntaje }}</span>
+                        <span class="score-total">/100</span>
+                      </div>
+                      <div class="progress-bar-bg">
+                        <div
+                          class="progress-bar-fill"
+                          [style.width.%]="candidato.puntaje">
+                        </div>
+                      </div>
+                    </div>
+                  </td>
+
+                  <!-- Estado -->
+                  <td class="td-status" (click)="$event.stopPropagation()">
+                    <span class="status-badge" [ngClass]="obtenerClaseEstado(candidato.estado)">
+                      {{ candidato.estado }}
+                    </span>
+                  </td>
+
+                  <!-- Acciones -->
+                  <td class="td-actions" (click)="$event.stopPropagation()">
+                    <div class="action-buttons-group">
+                      <button
+                        type="button"
+                        class="btn-action-icon"
+                        (click)="abrirExpediente(candidato)"
+                        title="Ver Expediente / CV">
+                        <mat-icon>visibility</mat-icon>
+                      </button>
+
+                      <!-- Cambiar estado -->
+                      <select
+                        class="quick-status-select"
+                        [ngModel]="candidato.estado"
+                        (ngModelChange)="actualizarEstado(candidato, $event)"
+                        title="Cambiar estado del postulante">
+                        @for (est of estados; track est) {
+                          <option [value]="est">{{ est }}</option>
+                        }
+                      </select>
+                    </div>
+                  </td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      </div>
+    }
+
+    <!-- Vista en tarjetas -->
+    @if (vistaActual === 'tarjetas' && postulantesFiltrados.length > 0) {
+      <div class="cards-grid">
+        @for (candidato of postulantesFiltrados; track candidato.id) {
+          <div class="applicant-card" (click)="abrirExpediente(candidato)">
+            
+            <div class="card-header">
+              <div class="avatar-large">{{ candidato.avatarIniciales }}</div>
+              <div class="card-title-group">
+                <h4 class="card-name">{{ candidato.nombres }} {{ candidato.apellidos }}</h4>
+                <p class="card-career">{{ candidato.carrera }}</p>
+              </div>
+              <span class="status-badge" [ngClass]="obtenerClaseEstado(candidato.estado)">
+                {{ candidato.estado }}
+              </span>
+            </div>
+
+            <div class="card-body">
+              <p class="degree-text">
+                <mat-icon class="icon-xs">school</mat-icon>
+                {{ candidato.tituloAcademico }}
+              </p>
+              <p class="exp-text">
+                <mat-icon class="icon-xs">work_history</mat-icon>
+                {{ candidato.aniosExperiencia }} años de experiencia
+              </p>
+
+              <!-- Barra de afinidad -->
+              <div class="score-block">
+                <div class="score-header">
+                  <span>Afinidad Curricular</span>
+                  <strong>{{ candidato.puntaje }}/100</strong>
+                </div>
+                <div class="progress-bar-bg">
+                  <div class="progress-bar-fill" [style.width.%]="candidato.puntaje"></div>
+                </div>
+              </div>
+
+              <!-- Habilidades -->
+              <div class="skills-tags">
+                @for (hab of candidato.habilidades.slice(0, 3); track hab) {
+                  <span class="skill-tag">{{ hab }}</span>
+                }
+              </div>
+            </div>
+
+            <div class="card-footer" (click)="$event.stopPropagation()">
+              <button
+                type="button"
+                class="btn-card-preview"
+                (click)="abrirExpediente(candidato)">
+                <mat-icon class="icon-xs">description</mat-icon>
+                Ver Expediente
+              </button>
+
+              <select
+                class="quick-status-select"
+                [ngModel]="candidato.estado"
+                (ngModelChange)="actualizarEstado(candidato, $event)">
+                @for (est of estados; track est) {
+                  <option [value]="est">{{ est }}</option>
+                }
+              </select>
+            </div>
+
+          </div>
+        }
+      </div>
+    }
+
+    <!-- Cuando no hay resultados -->
+    @if (postulantesFiltrados.length === 0) {
+      <div class="empty-state-card">
+        <mat-icon class="empty-icon">person_search</mat-icon>
+        <h3>No se encontraron postulantes</h3>
+        <p>No hay candidatos que coincidan con los filtros aplicados: estado, carrera o puntaje.</p>
+        <button class="btn-primary-small" (click)="limpiarFiltros()">
+          Restablecer todos los filtros
+        </button>
+      </div>
+    }
+
+  </section>
+</main>
+
+<!-- Modal para ver el expediente -->
+@if (candidatoSeleccionado) {
+  <div class="modal-backdrop" (click)="cerrarExpediente()">
+    <div class="modal-drawer" (click)="$event.stopPropagation()">
+      
+      <!-- Cabecera del modal -->
+      <div class="drawer-header">
+        <div class="drawer-candidate-info">
+          <div class="avatar-large">{{ candidatoSeleccionado.avatarIniciales }}</div>
+          <div>
+            <h2>{{ candidatoSeleccionado.nombres }} {{ candidatoSeleccionado.apellidos }}</h2>
+            <p class="subtitle">{{ candidatoSeleccionado.carrera }} • Postulación {{ candidatoSeleccionado.id }}</p>
+          </div>
+        </div>
+        <button class="btn-close" (click)="cerrarExpediente()" title="Cerrar expediente">
+          <mat-icon>close</mat-icon>
+        </button>
+      </div>
+
+      <!-- Detalle del postulante -->
+      <div class="drawer-body">
+        
+        <!-- Botones para cambiar estado -->
+        <div class="decision-panel">
+          <div class="decision-status">
+            <span class="decision-label">Estado Actual:</span>
+            <span class="status-badge" [ngClass]="obtenerClaseEstado(candidatoSeleccionado.estado)">
+              {{ candidatoSeleccionado.estado }}
+            </span>
+          </div>
+
+          <div class="decision-actions">
+            <button
+              type="button"
+              class="btn-decision-preselect"
+              (click)="actualizarEstado(candidatoSeleccionado, 'Preseleccionada')">
+              <mat-icon class="icon-xs">check_circle</mat-icon>
+              Aprobar Preselección
+            </button>
+            <button
+              type="button"
+              class="btn-decision-review"
+              (click)="actualizarEstado(candidatoSeleccionado, 'En revisión')">
+              <mat-icon class="icon-xs">pending</mat-icon>
+              Poner En Revisión
+            </button>
+            <button
+              type="button"
+              class="btn-decision-reject"
+              (click)="actualizarEstado(candidatoSeleccionado, 'Rechazada')">
+              <mat-icon class="icon-xs">cancel</mat-icon>
+              Rechazar
+            </button>
+            <a
+              routerLink="/evaluacion"
+              [queryParams]="{ id: candidatoSeleccionado.id }"
+              class="btn-decision-preselect"
+              style="text-decoration: none; border-color: var(--color-primario); background-color: var(--color-primario); color: #ffffff;"
+              title="Ir a calificar la clase demostrativa del postulante">
+              <mat-icon class="icon-xs">co_present</mat-icon>
+              Evaluar Clase Demostrativa
+            </a>
+          </div>
+        </div>
+
+        <!-- Datos de contacto -->
+        <div class="expediente-section">
+          <h4 class="section-title">Información de Contacto y Validación</h4>
+          <div class="info-grid">
+            <div class="info-item">
+              <span class="info-label">Cédula de Identidad:</span>
+              <span class="info-value">{{ candidatoSeleccionado.cedula }}</span>
+            </div>
+            <div class="info-item">
+              <span class="info-label">Correo Institucional / Personal:</span>
+              <span class="info-value">{{ candidatoSeleccionado.correo }}</span>
+            </div>
+            <div class="info-item">
+              <span class="info-label">Teléfono / Celular:</span>
+              <span class="info-value">{{ candidatoSeleccionado.telefono }}</span>
+            </div>
+            <div class="info-item">
+              <span class="info-label">Años de Trayectoria:</span>
+              <span class="info-value">{{ candidatoSeleccionado.aniosExperiencia }} años</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Resumen profesional -->
+        <div class="expediente-section">
+          <h4 class="section-title">Resumen Profesional</h4>
+          <p class="profile-summary">{{ candidatoSeleccionado.resumenPerfil }}</p>
+          
+          <h5 class="sub-section-title">Competencias Clave</h5>
+          <div class="skills-tags">
+            @for (hab of candidatoSeleccionado.habilidades; track hab) {
+              <span class="skill-tag">{{ hab }}</span>
+            }
+          </div>
+        </div>
+
+        <!-- Requisitos institucionales -->
+        <div class="expediente-section">
+          <h4 class="section-title">Verificación de Requisitos Institucionales</h4>
+          <ul class="requirements-checklist">
+            <li [class.verified]="candidatoSeleccionado.requisitosVerificados.tituloRegistrado">
+              <mat-icon class="check-icon">
+                {{ candidatoSeleccionado.requisitosVerificados.tituloRegistrado ? 'check_circle' : 'cancel' }}
+              </mat-icon>
+              <span>Registro de Título en Senescyt validado</span>
+            </li>
+            <li [class.verified]="candidatoSeleccionado.requisitosVerificados.experienciaAcreditada">
+              <mat-icon class="check-icon">
+                {{ candidatoSeleccionado.requisitosVerificados.experienciaAcreditada ? 'check_circle' : 'cancel' }}
+              </mat-icon>
+              <span>Certificados de experiencia docente o técnica acreditada</span>
+            </li>
+            <li [class.verified]="candidatoSeleccionado.requisitosVerificados.hojaDeVidaFirmada">
+              <mat-icon class="check-icon">
+                {{ candidatoSeleccionado.requisitosVerificados.hojaDeVidaFirmada ? 'check_circle' : 'cancel' }}
+              </mat-icon>
+              <span>Hoja de vida firmada y actualizada en formato institucional</span>
+            </li>
+          </ul>
+        </div>
+
+        <!-- Vista previa del documento -->
+        <div class="expediente-section">
+          <div class="doc-viewer-header">
+            <div class="doc-info">
+              <mat-icon class="icon-red">picture_as_pdf</mat-icon>
+              <div>
+                <strong>{{ candidatoSeleccionado.documentoCv }}</strong>
+                <span class="doc-meta">Expediente Digital • 2.4 MB</span>
+              </div>
+            </div>
+            <span class="doc-badge">Modo Lectura Previa</span>
+          </div>
+
+          <!-- Hoja de vida -->
+          <div class="simulated-doc-frame">
+            <div class="doc-page-mock">
+              <div class="doc-header-ists">
+                <span class="doc-logo-text">INSTITUTO SUPERIOR TECNOLÓGICO SUDAMERICANO</span>
+                <span class="doc-sub">Carpeta de Méritos y Postulación Docente</span>
+              </div>
+              <div class="doc-skeleton-line title"></div>
+              <div class="doc-skeleton-line short"></div>
+              <div class="doc-skeleton-line full"></div>
+              <div class="doc-skeleton-line full"></div>
+              <div class="doc-skeleton-line medium"></div>
+              <div class="doc-watermark">VISTA PREVIA SIN DESCARGA</div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Cerrar modal -->
+      <div class="drawer-footer">
+        <button class="btn-secondary" (click)="cerrarExpediente()">Cerrar Vista Previa</button>
+      </div>
+
+    </div>
+  </div>
+}

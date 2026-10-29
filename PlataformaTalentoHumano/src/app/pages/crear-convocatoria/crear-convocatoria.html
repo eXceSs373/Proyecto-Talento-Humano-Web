@@ -1,0 +1,442 @@
+<!-- Barra de navegacion -->
+<nav class="navbar">
+  <div class="logo-container">
+    <a routerLink="/inicio" class="logo-link">
+      <img src="logos/ISTS.svg" alt="Instituto Superior Tecnológico Sudamericano" class="logo-img" />
+      <h2 class="logo"><span>Gestión de Convocatorias</span></h2>
+    </a>
+  </div>
+
+  <div class="nav-links">
+    <a routerLink="/inicio" class="nav-link">
+      <mat-icon class="icon-small">work_outline</mat-icon>
+      <span>Inicio</span>
+    </a>
+
+    <!-- Enlace a Preseleccion para Talento Humano -->
+    <a *ngIf="authService.tieneRol(['TALENTO_HUMANO'])" routerLink="/preseleccion" class="nav-link">
+      <mat-icon class="icon-small">folder_shared</mat-icon>
+      <span>Preselección</span>
+    </a>
+
+    <!-- Enlace a Ranking para Talento Humano -->
+    <a *ngIf="authService.tieneRol(['TALENTO_HUMANO'])" routerLink="/ranking" class="nav-link">
+      <mat-icon class="icon-small">workspace_premium</mat-icon>
+      <span>Ranking</span>
+    </a>
+
+    <!-- Django Admin para Administrador Tecnico -->
+    <a *ngIf="authService.tieneRol(['ADMIN_TECNICO'])" href="http://127.0.0.1:8000/admin/" target="_blank" class="nav-link">
+      <mat-icon class="icon-small">admin_panel_settings</mat-icon>
+      <span>Django Admin</span>
+    </a>
+
+    <!-- Pastilla de usuario -->
+    <div class="user-chip">
+      <div class="avatar-circle">
+        <mat-icon class="icon-xs">account_circle</mat-icon>
+      </div>
+      <div class="user-chip-info">
+        <span class="user-name">{{ authService.usuarioActual()?.nombre }}</span>
+        <span class="user-badge">{{ authService.usuarioActual()?.nombreRol }}</span>
+      </div>
+    </div>
+
+    <!-- Boton para cambiar tema al lado de Salir -->
+    <button class="theme-toggle" (click)="toggleTheme()" title="Cambiar tema">
+      <mat-icon>{{ isDarkMode ? 'light_mode' : 'dark_mode' }}</mat-icon>
+    </button>
+
+    <!-- Boton para salir -->
+    <button class="btn-logout" (click)="cerrarSesion()" title="Cerrar Sesión">
+      <mat-icon class="icon-small">logout</mat-icon>
+      <span>Salir</span>
+    </button>
+  </div>
+</nav>
+
+<!-- Contenedor principal de la vista -->
+<main class="crear-container">
+  
+  <!-- Encabezado de la seccion -->
+  <header class="section-header">
+    <div class="header-left">
+      <h1>Nueva Convocatoria</h1>
+      <p>Crea y publica una nueva oferta laboral para docentes o personal administrativo.</p>
+    </div>
+
+    <div class="header-actions">
+      <button type="button" class="btn-outline-back" (click)="irAlPortal()">
+        <mat-icon class="icon-xs">arrow_back</mat-icon>
+        <span>Volver a Inicio</span>
+      </button>
+    </div>
+  </header>
+
+  <!-- Mensajes de Alerta -->
+  @if (mensajeExito) {
+    <div class="alert-banner success">
+      <div class="alert-content">
+        <mat-icon class="icon-alert">check_circle</mat-icon>
+        <div>
+          <h4>Convocatoria Creada Exitosamente</h4>
+          <p>{{ mensajeExito }}</p>
+        </div>
+      </div>
+      <button type="button" class="btn-close-alert" (click)="mensajeExito = null" title="Cerrar aviso">
+        <mat-icon class="icon-xs">close</mat-icon>
+      </button>
+    </div>
+  }
+
+  @if (mensajeError) {
+    <div class="alert-banner error" id="bannerAlerta">
+      <div class="alert-content">
+        <mat-icon class="icon-alert">error_outline</mat-icon>
+        <div class="alert-body">
+          <h4>Atención al Guardar</h4>
+          <p>{{ mensajeError }}</p>
+          @if (camposConError.length > 0) {
+            <ul class="error-missing-list">
+              @for (campo of camposConError; track campo) {
+                <li>
+                  <mat-icon class="icon-bullet">cancel</mat-icon>
+                  <span>{{ campo }}</span>
+                </li>
+              }
+            </ul>
+          }
+        </div>
+      </div>
+      <button type="button" class="btn-close-alert" (click)="mensajeError = null" title="Cerrar aviso">
+        <mat-icon class="icon-xs">close</mat-icon>
+      </button>
+    </div>
+  }
+
+  <!-- Layout dividido: Formulario a la izquierda y Previsualizacion a la derecha -->
+  <div class="workspace-grid">
+    
+    <!-- Columna del Formulario -->
+    <div class="form-column">
+      <form [formGroup]="formularioConvocatoria" (ngSubmit)="guardarConvocatoria()" class="convocatoria-form">
+
+        <!-- Tarjeta 1: Datos Generales -->
+        <div class="form-card">
+          <div class="card-legend">
+            <div class="legend-num">1</div>
+            <div>
+              <h3>Datos Principales</h3>
+              <p>Código y nombre del puesto de trabajo</p>
+            </div>
+          </div>
+
+          <div class="form-grid-dual">
+            
+            <!-- Codigo de la convocatoria -->
+            <div class="form-field">
+              <div class="field-label-row">
+                <label for="codigo">Código *</label>
+                <button type="button" class="btn-text-action" (click)="generarCodigoSugerido()" title="Generar código sugerido">
+                  <mat-icon class="icon-xs">auto_mode</mat-icon>
+                  <span>Sugerir Código</span>
+                </button>
+              </div>
+              <input
+                id="codigo"
+                type="text"
+                formControlName="codigo"
+                placeholder="Ej. DOC-DS-2026-01"
+                class="input-control uppercase"
+              />
+              @if (formularioConvocatoria.get('codigo')?.touched && formularioConvocatoria.get('codigo')?.invalid) {
+                <span class="field-error-msg">Ingresa un código de al menos 4 caracteres.</span>
+              } @else {
+                <span class="field-help">Identificador único de la convocatoria.</span>
+              }
+            </div>
+
+            <!-- Area -->
+            <div class="form-field">
+              <label for="area">Área *</label>
+              <select id="area" formControlName="area" class="input-control select-control">
+                @for (a of areas; track a) {
+                  <option [value]="a">{{ a }}</option>
+                }
+              </select>
+              <span class="field-help">Área a la que pertenece la vacante.</span>
+            </div>
+
+          </div>
+
+          <!-- Titulo de la convocatoria -->
+          <div class="form-field full-width">
+            <label for="titulo">Título del Puesto *</label>
+            <input
+              id="titulo"
+              type="text"
+              formControlName="titulo"
+              placeholder="Ej. Docente de Desarrollo de Software"
+              class="input-control"
+            />
+            @if (formularioConvocatoria.get('titulo')?.touched && formularioConvocatoria.get('titulo')?.invalid) {
+              <span class="field-error-msg">Ingresa un título descriptivo (mínimo 6 caracteres).</span>
+            } @else {
+              <span class="field-help">Nombre del puesto que verán los postulantes.</span>
+            }
+          </div>
+
+        </div>
+
+        <!-- Tarjeta 2: Carrera y Condiciones -->
+        <div class="form-card">
+          <div class="card-legend">
+            <div class="legend-num">2</div>
+            <div>
+              <h3>Carrera y Condiciones</h3>
+              <p>Carrera, nivel de estudio, modalidad y horario</p>
+            </div>
+          </div>
+
+          <div class="form-grid-dual">
+            
+            <!-- Carrera -->
+            <div class="form-field">
+              <label for="carrera">Carrera *</label>
+              <select
+                id="carrera"
+                formControlName="carrera"
+                (change)="onCambioCarrera()"
+                class="input-control select-control">
+                @for (c of carreras; track c) {
+                  <option [value]="c">{{ c }}</option>
+                }
+              </select>
+            </div>
+
+            <!-- Nivel del Cargo -->
+            <div class="form-field">
+              <label for="nivel">Nivel del Cargo *</label>
+              <select id="nivel" formControlName="nivel" class="input-control select-control">
+                @for (n of niveles; track n) {
+                  <option [value]="n">{{ n }}</option>
+                }
+              </select>
+            </div>
+
+            <!-- Modalidad -->
+            <div class="form-field">
+              <label for="modalidad">Modalidad *</label>
+              <select id="modalidad" formControlName="modalidad" class="input-control select-control">
+                @for (m of modalidades; track m) {
+                  <option [value]="m">{{ m }}</option>
+                }
+              </select>
+            </div>
+
+            <!-- Horario de Trabajo -->
+            <div class="form-field">
+              <label for="jornada">Horario de Trabajo *</label>
+              <select id="jornada" formControlName="jornada" class="input-control select-control">
+                @for (j of jornadas; track j) {
+                  <option [value]="j">{{ j }}</option>
+                }
+              </select>
+            </div>
+
+          </div>
+
+        </div>
+
+        <!-- Tarjeta 3: Descripcion y Habilidades -->
+        <div class="form-card">
+          <div class="card-legend">
+            <div class="legend-num">3</div>
+            <div>
+              <h3>Descripción del Puesto</h3>
+              <p>Funciones principales y habilidades requeridas</p>
+            </div>
+          </div>
+
+          <!-- Descripcion corta -->
+          <div class="form-field full-width">
+            <label for="descripcion_corta">Descripción *</label>
+            <textarea
+              id="descripcion_corta"
+              rows="4"
+              formControlName="descripcion_corta"
+              placeholder="Describe las funciones principales del puesto y los requisitos que debe cumplir el postulante."
+              class="input-control textarea-control"
+            ></textarea>
+            @if (formularioConvocatoria.get('descripcion_corta')?.touched && formularioConvocatoria.get('descripcion_corta')?.invalid) {
+              <span class="field-error-msg">
+                La descripción debe tener al menos 20 caracteres (actualmente tienes {{ (formularioConvocatoria.get('descripcion_corta')?.value || '').length }}).
+              </span>
+            } @else {
+              <span class="field-help">Este texto aparecerá en la tarjeta de la convocatoria.</span>
+            }
+          </div>
+
+          <!-- Palabras Clave -->
+          <div class="form-field full-width">
+            <label>Palabras Clave *</label>
+            <div class="tag-input-wrapper">
+              <input
+                type="text"
+                [(ngModel)]="nuevoTagTexto"
+                [ngModelOptions]="{standalone: true}"
+                (keydown.enter)="agregarTag($event)"
+                placeholder="Escribe una habilidad y presiona Enter o Agregar"
+                class="input-control input-tag"
+              />
+              <button type="button" class="btn-add-tag" (click)="agregarTag()">
+                <mat-icon class="icon-xs">add</mat-icon>
+                <span>Agregar</span>
+              </button>
+            </div>
+            @if (formularioConvocatoria.touched && tagsSeleccionados.length === 0) {
+              <span class="field-error-msg">Debes agregar al menos una palabra clave.</span>
+            }
+
+            <!-- Chips de tags agregados -->
+            <div class="tags-container">
+              @for (tag of tagsSeleccionados; track $index) {
+                <span class="tag-chip">
+                  <span>{{ tag }}</span>
+                  <button type="button" (click)="quitarTag($index)" class="btn-remove-tag" title="Eliminar etiqueta">
+                    <mat-icon class="icon-xs">close</mat-icon>
+                  </button>
+                </span>
+              }
+            </div>
+
+            <!-- Sugerencias rapidas -->
+            <div class="suggestions-wrapper">
+              <span class="suggestions-title">Sugerencias rápidas:</span>
+              <div class="suggestions-list">
+                @for (sug of tagsSugeridos; track sug) {
+                  <button
+                    type="button"
+                    class="btn-suggestion"
+                    (click)="agregarTagSugerido(sug)"
+                    [disabled]="tagsSeleccionados.includes(sug)">
+                    + {{ sug }}
+                  </button>
+                }
+              </div>
+            </div>
+
+          </div>
+
+        </div>
+
+        <!-- Tarjeta 4: Estado y Publicacion -->
+        <div class="form-card publication-card">
+          <div class="publication-content">
+            <div class="publication-info">
+              <h4>Publicar Convocatoria</h4>
+              <p>Al activarla, la convocatoria aparecerá de inmediato en la página de inicio para que puedan postularse.</p>
+            </div>
+            
+            <label class="toggle-switch">
+              <input type="checkbox" formControlName="activa" />
+              <span class="slider"></span>
+            </label>
+          </div>
+        </div>
+
+        <!-- Botones de accion -->
+        <div class="form-actions-footer">
+          <button type="button" class="btn-cancel" (click)="irAlPortal()">
+            <span>Cancelar</span>
+          </button>
+
+          <button type="submit" class="btn-submit" [disabled]="guardando">
+            @if (!guardando) {
+              <mat-icon class="icon-xs">send</mat-icon>
+              <span>Publicar Convocatoria</span>
+            } @else {
+              <span class="spinner"></span>
+              <span>Guardando en el Sistema...</span>
+            }
+          </button>
+        </div>
+
+      </form>
+    </div>
+
+    <!-- Columna de Previsualizacion en Vivo -->
+    <div class="preview-column">
+      <div class="preview-sticky">
+        
+        <div class="preview-header">
+          <mat-icon class="icon-xs">preview</mat-icon>
+          <span>Vista Previa en Tiempo Real</span>
+        </div>
+        <p class="preview-note">Así se verá la convocatoria en la página de inicio:</p>
+
+        <!-- Tarjeta que replica el estilo exacto de Inicio -->
+        <div class="vacante-card-preview">
+          
+          <div class="card-top">
+            <div class="badges-row">
+              <span class="badge-modalidad">{{ formularioConvocatoria.get('modalidad')?.value }}</span>
+              <span class="badge-area">{{ formularioConvocatoria.get('area')?.value }}</span>
+            </div>
+            <span class="time-posted">Publicada hoy</span>
+          </div>
+
+          <h3 class="card-title">
+            {{ formularioConvocatoria.get('titulo')?.value || 'Título del Puesto' }}
+          </h3>
+
+          <div class="meta-row">
+            <div class="meta-item">
+              <mat-icon class="icon-xs">school</mat-icon>
+              <span>{{ formularioConvocatoria.get('carrera')?.value }}</span>
+            </div>
+            <div class="meta-item">
+              <mat-icon class="icon-xs">schedule</mat-icon>
+              <span>{{ formularioConvocatoria.get('jornada')?.value }}</span>
+            </div>
+            <div class="meta-item">
+              <mat-icon class="icon-xs">workspace_premium</mat-icon>
+              <span>{{ formularioConvocatoria.get('nivel')?.value }}</span>
+            </div>
+          </div>
+
+          <p class="card-desc">
+            {{ formularioConvocatoria.get('descripcion_corta')?.value || 'Escribe una descripción para ver aquí el resumen del puesto.' }}
+          </p>
+
+          <div class="card-tags">
+            @for (t of tagsSeleccionados; track t) {
+              <span class="tag-pill">{{ t }}</span>
+            }
+          </div>
+
+          <div class="card-footer">
+            <div class="code-info">
+              <span class="code-label">Código:</span>
+              <span class="code-value">{{ formularioConvocatoria.get('codigo')?.value || 'DOC-2026-000' }}</span>
+            </div>
+
+            <button type="button" class="btn-postular-mock" disabled>
+              <span>Postularme Ahora</span>
+              <mat-icon class="icon-xs">arrow_forward</mat-icon>
+            </button>
+          </div>
+
+        </div>
+
+        <div class="preview-tips">
+          <mat-icon class="icon-xs">lightbulb</mat-icon>
+          <span>Los postulantes podrán enviar su hoja de vida a esta vacante una vez publicada.</span>
+        </div>
+
+      </div>
+    </div>
+
+  </div>
+
+</main>

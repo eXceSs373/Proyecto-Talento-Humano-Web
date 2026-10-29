@@ -1,0 +1,345 @@
+<!-- Barra de navegacion -->
+<nav class="navbar">
+  <div class="logo-container">
+    <a routerLink="/inicio" class="logo-link">
+      <img src="logos/ISTS.svg" alt="Instituto Superior Tecnológico Sudamericano" class="logo-img" />
+      <h2 class="logo"><span>Gestión de Postulantes</span></h2>
+    </a>
+  </div>
+
+  <div class="nav-links">
+    <!-- Si no ha iniciado sesion -->
+    <ng-container *ngIf="!authService.estaAutenticado()">
+      <a routerLink="/inicio" class="nav-link active">
+        <mat-icon class="icon-small">work_outline</mat-icon>
+        <span>Convocatorias</span>
+      </a>
+
+      <!-- Para el modo oscuro -->
+      <button class="theme-toggle" (click)="toggleTheme()" title="Cambiar tema">
+        <mat-icon>{{ isDarkMode ? 'light_mode' : 'dark_mode' }}</mat-icon>
+      </button>
+
+      <!-- Boton para entrar al login -->
+      <a routerLink="/login" class="btn-acceder">
+        <mat-icon class="icon-small">login</mat-icon>
+        <span>Acceder</span>
+      </a>
+    </ng-container>
+
+    <!-- Opciones cuando ya inicio sesion segun los 7 roles -->
+    <ng-container *ngIf="authService.estaAutenticado()">
+      <a routerLink="/inicio" class="nav-link active">
+        <mat-icon class="icon-small">work_outline</mat-icon>
+        <span>Convocatorias</span>
+      </a>
+
+      <!-- Para ver la postulacion propia (Postulante) -->
+      <a *ngIf="authService.tieneRol(['POSTULANTE'])" routerLink="/mi-postulacion" class="nav-link">
+        <mat-icon class="icon-small">assignment_ind</mat-icon>
+        <span>Mi Postulación</span>
+      </a>
+
+      <!-- Nueva Convocatoria (Administrador Tecnico y Talento Humano) -->
+      <a *ngIf="authService.tieneRol(['ADMIN_TECNICO', 'TALENTO_HUMANO'])" routerLink="/crear-convocatoria" class="nav-link">
+        <mat-icon class="icon-small">add_circle_outline</mat-icon>
+        <span>Nueva Convocatoria</span>
+      </a>
+
+      <!-- Preseleccion (Talento Humano, Vicerrectorado y Coordinador) -->
+      <a *ngIf="authService.tieneRol(['TALENTO_HUMANO', 'VICERRECTORADO', 'COORDINADOR'])" routerLink="/preseleccion" class="nav-link">
+        <mat-icon class="icon-small">dashboard</mat-icon>
+        <span>Preselección</span>
+      </a>
+
+      <!-- Evaluaciones (Rectorado, Vicerrectorado, Bienestar y Coordinador) -->
+      <a *ngIf="authService.tieneRol(['RECTORADO', 'VICERRECTORADO', 'BIENESTAR', 'COORDINADOR'])" routerLink="/evaluacion" class="nav-link">
+        <mat-icon class="icon-small">fact_check</mat-icon>
+        <span>Evaluaciones</span>
+      </a>
+
+      <!-- Ranking Final (Rectorado y Talento Humano) -->
+      <a *ngIf="authService.tieneRol(['RECTORADO', 'TALENTO_HUMANO'])" routerLink="/ranking" class="nav-link">
+        <mat-icon class="icon-small">workspace_premium</mat-icon>
+        <span>Ranking Final</span>
+      </a>
+
+      <!-- Cuentas Postulantes (Solo Administrador Tecnico) -->
+      <a *ngIf="authService.tieneRol(['ADMIN_TECNICO'])" routerLink="/admin-postulantes" class="nav-link">
+        <mat-icon class="icon-small">manage_accounts</mat-icon>
+        <span>Cuentas Postulantes</span>
+      </a>
+
+      <!-- Django Admin (Solo Administrador Tecnico) -->
+      <a *ngIf="authService.tieneRol(['ADMIN_TECNICO'])" href="http://127.0.0.1:8000/admin/" target="_blank" class="nav-link">
+        <mat-icon class="icon-small">admin_panel_settings</mat-icon>
+        <span>Django Admin</span>
+      </a>
+
+      <!-- Datos del usuario conectado -->
+      <div class="user-chip" (click)="irAlPanel()" title="Ir a mi módulo asignado">
+        <div class="avatar-circle">
+          <mat-icon class="icon-xs">account_circle</mat-icon>
+        </div>
+        <div class="user-chip-info">
+          <span class="user-name">{{ authService.usuarioActual()?.nombre }}</span>
+          <span class="user-badge">{{ authService.usuarioActual()?.nombreRol }}</span>
+        </div>
+      </div>
+
+      <!-- Para el modo oscuro al lado de Salir -->
+      <button class="theme-toggle" (click)="toggleTheme()" title="Cambiar tema">
+        <mat-icon>{{ isDarkMode ? 'light_mode' : 'dark_mode' }}</mat-icon>
+      </button>
+
+      <!-- Para cerrar sesion -->
+      <button class="btn-logout" (click)="cerrarSesion()" title="Cerrar Sesión">
+        <mat-icon class="icon-small">logout</mat-icon>
+        <span>Salir</span>
+      </button>
+    </ng-container>
+  </div>
+</nav>
+
+<!-- Encabezado principal -->
+<header class="hero-section">
+  <div class="hero-content">
+    <h1>Construye el futuro de la educación técnica en el <span>ISTS</span></h1>
+    <p class="hero-description">
+      Únete a nuestra institución de educación superior. Impulsamos procesos de selección transparentes, orientados al mérito, la innovación pedagógica y la excelencia tecnológica.
+    </p>
+
+    <!-- Resumen rapido -->
+    <div class="hero-highlights">
+      <div class="highlight-item">
+        <mat-icon class="icon-sm">campaign</mat-icon>
+        <span>{{ vacantes.length }} {{ vacantes.length === 1 ? 'Convocatoria Abierta' : 'Convocatorias Abiertas' }}</span>
+      </div>
+      <div class="highlight-item">
+        <mat-icon class="icon-sm">devices</mat-icon>
+        <span>Recepción 100% Digital</span>
+      </div>
+      <div class="highlight-item">
+        <mat-icon class="icon-sm">verified</mat-icon>
+        <span>Mérito y Transparencia</span>
+      </div>
+    </div>
+  </div>
+</header>
+
+<!-- Contenido principal -->
+<main class="main-container">
+  
+  <!-- Para buscar y filtrar -->
+  <section class="search-filter-card">
+    <div class="search-input-group">
+      <mat-icon class="search-icon">search</mat-icon>
+      <input
+        type="text"
+        [(ngModel)]="busqueda"
+        placeholder="Buscar por cargo, carrera o especialidad: Angular, Diseño, Salud..."
+        class="search-input"
+      />
+      @if (busqueda) {
+        <button class="clear-btn" (click)="busqueda = ''" title="Borrar búsqueda">
+          <mat-icon class="icon-xs">close</mat-icon>
+        </button>
+      }
+    </div>
+
+    <div class="filter-dropdowns">
+      <!-- Filtro por area -->
+      <div class="select-field">
+        <label for="selectArea">Área:</label>
+        <select id="selectArea" [(ngModel)]="areaSeleccionada" class="select-input">
+          <option value="Todas">Todas las Áreas</option>
+          @for (area of areas; track area) {
+            <option [value]="area">{{ area }}</option>
+          }
+        </select>
+      </div>
+
+      <!-- Filtro por modalidad -->
+      <div class="select-field">
+        <label for="selectModalidad">Modalidad:</label>
+        <select id="selectModalidad" [(ngModel)]="modalidadSeleccionada" class="select-input">
+          <option value="Todas">Todas las Modalidades</option>
+          @for (mod of modalidades; track mod) {
+            <option [value]="mod">{{ mod }}</option>
+          }
+        </select>
+      </div>
+
+      @if (busqueda || areaSeleccionada !== 'Todas' || modalidadSeleccionada !== 'Todas') {
+        <button class="btn-clear-filters" (click)="limpiarFiltros()">
+          <mat-icon class="icon-xs">restart_alt</mat-icon>
+          Restablecer
+        </button>
+      }
+    </div>
+  </section>
+
+  <!-- Lista de convocatorias -->
+  <section class="vacantes-section">
+    <div class="section-title-bar">
+      <div>
+        <h2>Convocatorias Laborales Vigentes</h2>
+        <p class="section-sub">Revisa los perfiles requeridos y postúlate enviando tu Hoja de Vida en formato PDF.</p>
+      </div>
+      <span class="counter-pill">
+        Mostrando <strong>{{ vacantesFiltradas.length }}</strong> de {{ vacantes.length }} oportunidades
+      </span>
+    </div>
+
+    <!-- Indicador de carga inicial -->
+    @if (cargando && vacantes.length === 0) {
+      <div class="empty-state">
+        <mat-icon class="empty-icon" style="animation: spin 1.5s linear infinite;">refresh</mat-icon>
+        <h3>Cargando convocatorias...</h3>
+        <p>Consultando las oportunidades vigentes registradas en el sistema.</p>
+      </div>
+    } @else if (vacantesFiltradas.length > 0) {
+      <!-- Tarjetas de convocatorias -->
+      <div class="vacantes-grid">
+        @for (vacante of vacantesFiltradas; track vacante.id) {
+          <article class="vacante-card">
+            
+            <div class="card-top">
+              <div class="badges-row">
+                <span class="badge-area">{{ vacante.area }}</span>
+                <span class="badge-modalidad">{{ vacante.modalidad }}</span>
+              </div>
+              <div class="top-actions">
+                <span class="posted-time">{{ formatearFecha(vacante.fecha_creacion || vacante.tiempoPublicado) }}</span>
+                @if (authService.tieneRol(['ADMIN_TECNICO', 'TALENTO_HUMANO'])) {
+                  <button
+                    type="button"
+                    class="btn-delete-card"
+                    (click)="eliminarConvocatoria(vacante, $event)"
+                    title="Eliminar convocatoria (Admin / Talento Humano)">
+                    <mat-icon class="icon-xs">delete_outline</mat-icon>
+                  </button>
+                }
+              </div>
+            </div>
+
+            <h3 class="vacante-heading">{{ vacante.titulo }}</h3>
+
+            <div class="vacante-submeta">
+              <p class="carrera-name">
+                <mat-icon class="icon-xs">school</mat-icon>
+                {{ vacante.carrera }}
+              </p>
+              <p class="location-name">
+                <mat-icon class="icon-xs">location_on</mat-icon>
+                {{ vacante.ubicacion || 'Loja, Ecuador' }} • {{ vacante.jornada }}
+              </p>
+            </div>
+
+            <p class="vacante-desc">{{ vacante.descripcion_corta || vacante.descripcionCorta }}</p>
+
+            <div class="tags-container">
+              @for (tag of vacante.tags; track tag) {
+                <span class="tag-pill">{{ tag }}</span>
+              }
+            </div>
+
+            <div class="card-bottom">
+              <span class="contract-type">{{ vacante.nivel }}</span>
+              <button
+                type="button"
+                class="btn-apply"
+                (click)="postularse(vacante)"
+                title="Postularme a esta convocatoria">
+                <span>Postularme Ahora</span>
+                <mat-icon class="icon-xs">arrow_forward</mat-icon>
+              </button>
+            </div>
+
+          </article>
+        }
+      </div>
+    } @else {
+      <!-- Si no hay resultados con los filtros aplicados -->
+      <div class="empty-state">
+        <mat-icon class="empty-icon">search_off</mat-icon>
+        <h3>No encontramos convocatorias con esos filtros</h3>
+        <p>Prueba buscando con otros términos o restablece los filtros para ver todas las oportunidades.</p>
+        <button class="btn-reset" (click)="limpiarFiltros()">Ver todas las convocatorias</button>
+      </div>
+    }
+  </section>
+
+  <!-- Pasos del proceso -->
+  <section class="process-section">
+    <div class="process-header">
+      <h2>Fases del Proceso de Reclutamiento</h2>
+      <p>Conoce las fases oficiales de selección en el Instituto Superior Tecnológico Sudamericano.</p>
+    </div>
+
+    <!-- Stepper de 7 Etapas Uniformes -->
+    <div class="process-stepper">
+      <div class="step-card">
+        <div class="step-num">1</div>
+        <h4>Publicación</h4>
+        <p>Convocatoria abierta y difusión de vacantes.</p>
+      </div>
+
+      <div class="step-card">
+        <div class="step-num">2</div>
+        <h4>Postulación</h4>
+        <p>Recepción de hoja de vida en PDF institucional.</p>
+      </div>
+
+      <div class="step-card">
+        <div class="step-num">3</div>
+        <h4>Preselección</h4>
+        <p>Evaluación de carpetas y afinidad curricular.</p>
+      </div>
+
+      <div class="step-card">
+        <div class="step-num">4</div>
+        <h4>Oferta</h4>
+        <p>Notificación y acuerdo preliminar de condiciones.</p>
+      </div>
+
+      <div class="step-card">
+        <div class="step-num">5</div>
+        <h4>Evaluaciones</h4>
+        <p>Clase demostrativa, entrevista y test psicológico.</p>
+      </div>
+
+      <div class="step-card">
+        <div class="step-num">6</div>
+        <h4>Ranking</h4>
+        <p>Promedio ponderado y selección de finalistas.</p>
+      </div>
+
+      <div class="step-card">
+        <div class="step-num">7</div>
+        <h4>Contratación</h4>
+        <p>Firma de contrato e inducción docente.</p>
+      </div>
+    </div>
+  </section>
+
+</main>
+
+<!-- Pie de pagina -->
+<footer class="main-footer">
+  <div class="footer-content">
+    <div class="footer-brand">
+      <div class="footer-brand-row">
+        <img src="logos/ISTS.svg" alt="Instituto Superior Tecnológico Sudamericano" class="footer-logo-img" />
+        <h3 class="footer-logo"><span>Talento Humano</span></h3>
+      </div>
+      <p>Instituto Superior Tecnológico Sudamericano • Innovación y Excelencia en Educación Superior</p>
+    </div>
+
+    <div class="footer-info">
+      <p><strong>Campus Matriz:</strong> Loja, Ecuador</p>
+      <p><strong>Contacto:</strong> talentohumano&#64;ists.edu.ec</p>
+      <p class="copyright">© 2026 ISTS. Todos los derechos reservados.</p>
+    </div>
+  </div>
+</footer>

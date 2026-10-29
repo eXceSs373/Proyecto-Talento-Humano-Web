@@ -1,0 +1,57 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="40 70 370 295" width="370" height="295">
+  <defs>
+    <style>
+      @import url('https://fonts.googleapis.com/css2?family=Caveat:wght@600&amp;family=Poppins:wght@300;400;800;900&amp;display=swap');
+      .emblem-teal { fill: #007A7B; }
+      .brand-text-sub {
+        font-family: 'Poppins', 'Montserrat', 'Segoe UI', Arial, sans-serif;
+        font-size: 14.5px;
+        font-weight: 400;
+        fill: #1a1a1a;
+      }
+      .brand-line {
+        stroke: #777777;
+        stroke-width: 0.9;
+      }
+      .brand-text-main {
+        font-family: 'Poppins', 'Montserrat', 'Segoe UI', Arial, sans-serif;
+        font-size: 35.5px;
+        font-weight: 900;
+        letter-spacing: 0.5px;
+        fill: #111111;
+      }
+      .brand-slogan {
+        font-family: 'Caveat', 'Segoe Script', 'Brush Script MT', 'Dancing Script', cursive;
+        font-style: italic;
+        font-size: 22px;
+        font-weight: 600;
+        fill: #00508F;
+      }
+    </style>
+  </defs>
+
+  <!-- Isotipo institucional (3 partes geométricas en verde azulado oficial #007A7B) -->
+  <g transform="translate(0, 447) scale(0.1, -0.1)" class="emblem-teal">
+    <!-- Rectángulo superior izquierdo con calado semicircular blanco -->
+    <path d="M1648 3599 c-17 -9 -18 -36 -18 -325 0 -244 3 -316 13 -319 7 -3 136 -4 287 -3 l275 3 -55 26 c-97 46 -163 130 -185 237 -12 58 -12 76 0 129 24 103 93 189 183 229 23 10 42 21 42 26 0 12 -522 9 -542 -3z" />
+    <!-- Rectángulo superior derecho -->
+    <path d="M2297 3598 c-16 -12 -17 -41 -15 -328 l3 -315 320 0 320 0 3 315 c2 287 1 316 -15 328 -12 9 -91 12 -308 12 -217 0 -296 -3 -308 -12z" />
+    <!-- Cuadrante semicircular inferior derecho -->
+    <path d="M2278 2894 c-5 -4 -8 -173 -8 -374 0 -309 2 -369 15 -380 11 -9 26 -8 72 5 168 49 266 153 294 313 22 122 -40 283 -136 356 -71 55 -215 103 -237 80z" />
+  </g>
+
+  <!-- INSTITUTO TECNOLÓGICO -->
+  <text x="227.5" y="271" text-anchor="middle" textLength="333" lengthAdjust="spacing" class="brand-text-sub">INSTITUTO TECNOLÓGICO</text>
+
+  <!-- Línea divisoria superior -->
+  <line x1="55" y1="277" x2="400" y2="277" class="brand-line" />
+
+  <!-- SUDAMERICANO -->
+  <text x="227.5" y="313" text-anchor="middle" textLength="345" lengthAdjust="spacingAndGlyphs" class="brand-text-main">SUDAMERICANO</text>
+
+  <!-- Línea divisoria inferior -->
+  <line x1="55" y1="319" x2="400" y2="319" class="brand-line" />
+
+  <!-- Slogan institucional en azul: ¡Hacemos gente de talento! -->
+  <text x="230" y="347" text-anchor="middle" textLength="290" lengthAdjust="spacing" class="brand-slogan">¡Hacemos gente de talento!</text>
+</svg>

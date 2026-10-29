@@ -1,0 +1,32 @@
+# Python virtual environment
+venv/
+env/
+ENV/
+.venv/
+bin/
+lib/
+include/
+
+# Byte-compiled / optimized files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Local SQLite databases (si aplica)
+*.sqlite3
+*.db
+
+# Archivos de medios subidos (CVs de postulantes)
+media/cvs/*
+!media/cvs/.gitkeep
+
+# Variables de entorno locales
+.env
+.env.local
+
+# IDEs y editores
+.vscode/
+.idea/
+
+# Logs
+*.log

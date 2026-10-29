@@ -1,0 +1,404 @@
+<!-- Barra de navegacion -->
+<nav class="navbar">
+  <div class="logo-container">
+    <a routerLink="/inicio" class="logo-link">
+      <img src="logos/ISTS.svg" alt="Instituto Superior Tecnológico Sudamericano" class="logo-img" />
+      <h2 class="logo"><span>Talento Humano</span></h2>
+    </a>
+    <span class="nav-divider">/</span>
+    <span class="nav-current-module">Postulación a Convocatoria</span>
+  </div>
+
+  <div class="nav-links">
+    <a routerLink="/inicio" class="nav-link">
+      <mat-icon class="icon-small">arrow_back</mat-icon>
+      Volver a Convocatorias
+    </a>
+
+    <!-- Modo oscuro -->
+    <button class="theme-toggle" (click)="toggleTheme()" title="Cambiar tema">
+      <mat-icon>{{ isDarkMode ? 'light_mode' : 'dark_mode' }}</mat-icon>
+    </button>
+  </div>
+</nav>
+
+<!-- Cabecera de la convocatoria -->
+<header class="application-header">
+  <div class="header-content">
+    <div class="header-title-row">
+      <div>
+        <h1>Formulario Oficial de Postulación</h1>
+        <p class="header-desc">
+          Ingresa tus datos personales y carga tu Hoja de Vida integral para participar en el proceso de selección docente y administrativo del ISTS.
+        </p>
+      </div>
+
+      <div class="step-indicator">
+        <span class="step-number">PASO 1 DE 2</span>
+        <span class="step-name">Datos y Expediente Digital</span>
+      </div>
+    </div>
+  </div>
+</header>
+
+<!-- Formulario y resumen -->
+<main class="application-container">
+  
+  <!-- Formulario y archivo -->
+  <section class="form-column">
+    
+    <!-- Datos del postulante -->
+    <div class="card-section">
+      <div class="section-header">
+        <div class="header-icon-wrap">
+          <mat-icon>person</mat-icon>
+        </div>
+        <div>
+          <h3>1. Perfil Profesional y Datos Personales</h3>
+          <p class="section-subtitle">Asegúrate de que tus datos coincidan exactamente con tu documento de identidad y títulos oficiales.</p>
+        </div>
+      </div>
+
+      <div class="form-grid">
+        <!-- Nombres -->
+        <div class="form-group">
+          <label for="nombres">Nombres Completos <span class="required">*</span></label>
+          <input
+            id="nombres"
+            type="text"
+            [(ngModel)]="perfil.nombres"
+            placeholder="Ej. Carlos Andrés"
+            class="form-control"
+          />
+        </div>
+
+        <!-- Apellidos -->
+        <div class="form-group">
+          <label for="apellidos">Apellidos Completos <span class="required">*</span></label>
+          <input
+            id="apellidos"
+            type="text"
+            [(ngModel)]="perfil.apellidos"
+            placeholder="Ej. Mendoza Alvarado"
+            class="form-control"
+          />
+        </div>
+
+        <!-- Cedula -->
+        <div class="form-group">
+          <label for="cedula">Cédula de Identidad o Pasaporte <span class="required">*</span></label>
+          <input
+            id="cedula"
+            type="text"
+            [(ngModel)]="perfil.cedula"
+            placeholder="Ej. 1104829102"
+            maxlength="15"
+            class="form-control"
+          />
+        </div>
+
+        <!-- Correo -->
+        <div class="form-group">
+          <label for="correo">Correo Electrónico de Contacto <span class="required">*</span></label>
+          <input
+            id="correo"
+            type="email"
+            [(ngModel)]="perfil.correo"
+            placeholder="carlos.mendoza@email.com"
+            class="form-control"
+          />
+        </div>
+
+        <!-- Telefono -->
+        <div class="form-group">
+          <label for="telefono">Teléfono / Celular <span class="required">*</span></label>
+          <input
+            id="telefono"
+            type="tel"
+            [(ngModel)]="perfil.telefono"
+            placeholder="0987654321"
+            class="form-control"
+          />
+        </div>
+
+        <!-- Titulo academico -->
+        <div class="form-group">
+          <label for="titulo">Título de Mayor Nivel <span class="required">*</span></label>
+          <input
+            id="titulo"
+            type="text"
+            [(ngModel)]="perfil.tituloAcademico"
+            placeholder="Ej. Ingeniero en Sistemas / Máster en Software"
+            class="form-control"
+          />
+        </div>
+
+        <!-- Experiencia -->
+        <div class="form-group">
+          <label for="experiencia">Años de Trayectoria Docente o Técnica</label>
+          <input
+            id="experiencia"
+            type="number"
+            min="0"
+            max="40"
+            [(ngModel)]="perfil.aniosExperiencia"
+            placeholder="Ej. 5"
+            class="form-control"
+          />
+        </div>
+
+        <!-- Portafolio o linkedin -->
+        <div class="form-group">
+          <label for="portafolio">Portafolio Web o Perfil de LinkedIn</label>
+          <input
+            id="portafolio"
+            type="url"
+            [(ngModel)]="perfil.enlacePortafolio"
+            placeholder="https://linkedin.com/in/usuario"
+            class="form-control"
+          />
+        </div>
+
+        <!-- Descripcion o resumen -->
+        <div class="form-group full-width">
+          <label for="resumen">Extracto Profesional / Perfil Resumido</label>
+          <textarea
+            id="resumen"
+            rows="3"
+            [(ngModel)]="perfil.resumenPerfil"
+            placeholder="Describe brevemente tus principales competencias docentes, investigación y experiencia laboral relevante..."
+            class="form-control"
+          ></textarea>
+        </div>
+      </div>
+    </div>
+
+    <!-- Subida del CV -->
+    <div class="card-section">
+      <div class="section-header">
+        <div class="header-icon-wrap">
+          <mat-icon>upload_file</mat-icon>
+        </div>
+        <div>
+          <h3>2. Carga de Documentación: Hoja de Vida Completa</h3>
+          <p class="section-subtitle">
+            Se receptará un <strong>único archivo PDF</strong> que contenga tu Hoja de Vida institucional actualizada, incluyendo títulos registrados y certificados laborales anexos.
+          </p>
+        </div>
+      </div>
+
+      <!-- Area para arrastrar archivo -->
+      <div class="dropzone-container">
+        
+        <!-- Cuando no hay archivo -->
+        @if (!archivoCv) {
+          <div
+            class="dropzone-box"
+            [class.is-dragging]="isDragging"
+            (dragover)="onDragOver($event)"
+            (dragleave)="onDragLeave($event)"
+            (drop)="onDrop($event)"
+            (click)="fileInput.click()">
+            
+            <input
+              #fileInput
+              type="file"
+              accept=".pdf,application/pdf"
+              (change)="onFileSelected($event)"
+              style="display: none;"
+            />
+
+            <div class="dropzone-illustration">
+              <mat-icon class="upload-icon">cloud_upload</mat-icon>
+            </div>
+
+            <h4 class="dropzone-title">Arrastra tu Hoja de Vida en PDF aquí</h4>
+            <p class="dropzone-prompt">
+              o haz <span class="browse-link">clic para examinar</span> en tu equipo
+            </p>
+
+            <div class="dropzone-specs">
+              <span class="spec-tag">
+                <mat-icon class="icon-xs">picture_as_pdf</mat-icon>
+                Solo formato PDF
+              </span>
+              <span class="spec-tag">
+                <mat-icon class="icon-xs">folder_zip</mat-icon>
+                Máx. 50 MB
+              </span>
+            </div>
+          </div>
+        }
+
+        <!-- Archivo seleccionado -->
+        @if (archivoCv) {
+          <div class="uploaded-file-card">
+            <div class="file-icon-box">
+              <mat-icon class="pdf-icon">picture_as_pdf</mat-icon>
+            </div>
+            <div class="file-details">
+              <div class="file-header">
+                <span class="file-name">{{ archivoCv.nombre }}</span>
+                <span class="badge-verified">
+                  <mat-icon class="icon-xs">check_circle</mat-icon>
+                  PDF Válido
+                </span>
+              </div>
+              <div class="file-meta">
+                <span>Tamaño: {{ archivoCv.tamano }}</span>
+                <span>•</span>
+                <span>Cargado hoy: {{ archivoCv.fechaCarga }}</span>
+              </div>
+            </div>
+
+            <div class="file-actions">
+              <button
+                type="button"
+                class="btn-remove-file"
+                (click)="removerArchivo($event)"
+                title="Eliminar y seleccionar otro archivo">
+                <mat-icon>delete_outline</mat-icon>
+              </button>
+            </div>
+          </div>
+        }
+
+      </div>
+
+      <!-- Nota de ayuda -->
+      <div class="info-alert">
+        <mat-icon class="alert-icon">info</mat-icon>
+        <div class="alert-text">
+          <strong>Recomendación ISTS:</strong> Consolida tu Hoja de Vida, copia del registro Senescyt y certificados en un único archivo PDF para agilizar la revisión en la etapa de Preselección.
+        </div>
+      </div>
+
+    </div>
+
+  </section>
+
+  <!-- Resumen de la vacante -->
+  <aside class="sidebar-column">
+    
+    <div class="sticky-vacancy-card">
+      <div class="vacancy-badge">
+        <span class="status-indicator"></span>
+        CONVOCATORIA ACTIVA
+      </div>
+
+      <h3 class="vacancy-title">{{ vacante.titulo }}</h3>
+
+      <div class="vacancy-meta-list">
+        <div class="meta-item">
+          <mat-icon class="icon-sm">school</mat-icon>
+          <div>
+            <span class="meta-label">Carrera</span>
+            <span class="meta-val">{{ vacante.carrera }}</span>
+          </div>
+        </div>
+
+        <div class="meta-item">
+          <mat-icon class="icon-sm">location_on</mat-icon>
+          <div>
+            <span class="meta-label">Ubicación</span>
+            <span class="meta-val">{{ vacante.ubicacion }}</span>
+          </div>
+        </div>
+
+        <div class="meta-item">
+          <mat-icon class="icon-sm">schedule</mat-icon>
+          <div>
+            <span class="meta-label">Modalidad / Jornada</span>
+            <span class="meta-val">{{ vacante.modalidad }} • {{ vacante.jornada }}</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Requisitos minimos -->
+      <div class="requirements-box">
+        <span class="req-title">Requisitos Mínimos:</span>
+        <ul class="req-list">
+          @for (req of vacante.requisitos; track req) {
+            <li>
+              <mat-icon class="check-icon">check</mat-icon>
+              <span>{{ req }}</span>
+            </li>
+          }
+        </ul>
+      </div>
+
+      <!-- Aceptar terminos -->
+      <div class="terms-acceptance">
+        <label class="checkbox-container">
+          <input type="checkbox" [(ngModel)]="perfil.terminosAceptados" />
+          <span class="checkmark"></span>
+          <span class="terms-text">
+            Certifico que la información y documentación adjunta es verídica y autorizo el tratamiento de mis datos personales para fines del proceso de selección del ISTS.
+          </span>
+        </label>
+      </div>
+
+      <!-- Boton para enviar -->
+      <button
+        type="button"
+        class="btn-submit-application"
+        [disabled]="enviando"
+        (click)="enviarPostulacion()">
+        @if (!enviando) {
+          <mat-icon>send</mat-icon>
+          <span>Enviar Postulación</span>
+        } @else {
+          <span class="spinner"></span>
+          <span>Procesando postulación...</span>
+        }
+      </button>
+
+      <p class="trust-footer">
+        <mat-icon class="icon-xs">lock</mat-icon>
+        Envío protegido y encriptado bajo normativa de confidencialidad institucional.
+      </p>
+
+    </div>
+
+  </aside>
+
+</main>
+
+<!-- Mensaje de exito -->
+@if (postulacionEnviada) {
+  <div class="modal-backdrop">
+    <div class="modal-dialog">
+      <div class="modal-icon-header">
+        <mat-icon class="success-icon">task_alt</mat-icon>
+      </div>
+
+      <h2>¡Postulación Recibida con Éxito!</h2>
+      <p class="modal-desc">
+        Tu expediente ha sido registrado satisfactoriamente en el Sistema de Reclutamiento y Selección de Personal del Instituto Superior Tecnológico Sudamericano.
+      </p>
+
+      <div class="code-box">
+        <span class="code-label">Número de Postulación / Trámite:</span>
+        <span class="code-value">{{ codigoExpediente }}</span>
+      </div>
+
+      <div class="next-steps-info">
+        <h4>Próximos pasos en el proceso:</h4>
+        <ol>
+          <li>El departamento de <strong>Talento Humano</strong> revisará tu expediente en la fase de <strong>Preselección</strong>.</li>
+          <li>Recibirás notificaciones a tu correo <strong>{{ perfil.correo }}</strong> sobre el avance de tu postulación.</li>
+        </ol>
+      </div>
+
+      <div class="modal-footer" style="display: flex; gap: 0.75rem; justify-content: center; flex-wrap: wrap;">
+        <button class="btn-primary" (click)="irAMiPostulacion()" style="display: inline-flex; align-items: center; gap: 0.5rem;">
+          <mat-icon class="icon-sm">track_changes</mat-icon>
+          <span>Ver Estado de mi Postulación</span>
+        </button>
+        <button class="btn-outline" (click)="cerrarModalExito()" style="border: 1px solid var(--borde-tarjetas); background: transparent; color: var(--texto-principal); padding: 0.75rem 1.4rem; border-radius: 8px; font-weight: 600; cursor: pointer;">
+          Cerrar y Volver
+        </button>
+      </div>
+    </div>
+  </div>
+}

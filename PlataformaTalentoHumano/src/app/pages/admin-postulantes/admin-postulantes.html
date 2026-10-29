@@ -1,0 +1,101 @@
+<div class="admin-wrapper">
+
+  <!-- Barra de navegacion simple -->
+  <header class="admin-header">
+    <button type="button" class="btn-regresar" (click)="regresar()">
+      <mat-icon>arrow_back</mat-icon>
+      <span>Regresar al Portal</span>
+    </button>
+
+    <div class="header-brand-title">
+      <img src="logos/ISTS.svg" alt="ISTS" class="header-logo" />
+      <h2>Verificación de Cuentas de Postulantes en Base de Datos</h2>
+    </div>
+
+    <button type="button" class="btn-recargar" (click)="cargarPostulantesBD()" title="Actualizar lista">
+      <mat-icon>refresh</mat-icon>
+      <span>Actualizar</span>
+    </button>
+  </header>
+
+  <main class="admin-content">
+    <div class="card-table">
+      <div class="table-info-bar">
+        <div>
+          <h3>Postulantes Registrados en MySQL ({{ postulantes.length }})</h3>
+          <p>Cuentas creadas para pruebas y registro desde el portal de postulantes.</p>
+        </div>
+        <div class="badge-credential-note">
+          <mat-icon class="icon-xs">key</mat-icon>
+          <span>Contraseña de prueba para todas las cuentas: <strong>123456</strong></span>
+        </div>
+      </div>
+
+      @if (cargando) {
+        <div class="loading-box">
+          <p>Cargando datos de la base de datos...</p>
+        </div>
+      } @else if (postulantes.length === 0) {
+        <div class="empty-box">
+          <p>No se encontraron cuentas con rol POSTULANTE en la base de datos.</p>
+        </div>
+      } @else {
+        <div class="table-responsive">
+          <table class="simple-table">
+            <thead>
+              <tr>
+                <th>ID</th>
+                <th>Cédula</th>
+                <th>Nombres</th>
+                <th>Apellidos</th>
+                <th>Usuario</th>
+                <th>Correo Electrónico</th>
+                <th>Teléfono</th>
+                <th>Contraseña</th>
+                <th>Fecha de Registro</th>
+                <th>Vigencia de Archivo</th>
+                <th>Estado</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (user of postulantes; track user.id) {
+                <tr>
+                  <td><strong>#{{ user.id }}</strong></td>
+                  <td><code>{{ user.cedula }}</code></td>
+                  <td>{{ user.first_name }}</td>
+                  <td>{{ user.last_name }}</td>
+                  <td><code>{{ user.username }}</code></td>
+                  <td>{{ user.email }}</td>
+                  <td>{{ user.telefono || 'Sin registrar' }}</td>
+                  <td><span class="password-chip">123456</span></td>
+                  <td>{{ formatearFecha(user.date_joined) }}</td>
+                  <td>
+                    @if (user.estadoArchivo === 'activo') {
+                      <span class="file-chip active">
+                        <mat-icon class="chip-icon">schedule</mat-icon>
+                        {{ user.vigenciaArchivo }}
+                      </span>
+                    } @else if (user.estadoArchivo === 'caducado') {
+                      <span class="file-chip expired">
+                        <mat-icon class="chip-icon">warning</mat-icon>
+                        Caducado
+                      </span>
+                    } @else {
+                      <span class="file-chip empty">Sin archivo</span>
+                    }
+                  </td>
+                  <td>
+                    <span class="status-chip" [class.active]="user.is_active !== false">
+                      {{ user.is_active !== false ? 'Activa' : 'Inactiva' }}
+                    </span>
+                  </td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      }
+    </div>
+  </main>
+
+</div>

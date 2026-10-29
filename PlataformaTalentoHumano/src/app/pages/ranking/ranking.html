@@ -1,0 +1,664 @@
+<!-- Barra de navegacion -->
+<nav class="navbar">
+  <div class="logo-container">
+    <a routerLink="/inicio" class="logo-link">
+      <div class="logo-slot" title="Logo Institucional ISTS">
+        <img src="logos/ISTS.svg" alt="Instituto Superior Tecnológico Sudamericano" class="logo-img" />
+      </div>
+      <div class="system-branding">
+        <h2 class="logo">Dashboard <span>Gerencial</span></h2>
+        <span class="sub-brand">Rectorado y Consejo Directivo</span>
+      </div>
+    </a>
+  </div>
+
+  <div class="nav-links">
+    <a routerLink="/inicio" class="nav-link">
+      <mat-icon class="icon-small">home</mat-icon>
+      <span>Inicio</span>
+    </a>
+    <a *ngIf="authService.tieneRol(['ADMIN_TECNICO', 'TALENTO_HUMANO'])" routerLink="/crear-convocatoria" class="nav-link">
+      <mat-icon class="icon-small">add_circle_outline</mat-icon>
+      <span>Nueva Convocatoria</span>
+    </a>
+    <a *ngIf="authService.tieneRol(['TALENTO_HUMANO', 'VICERRECTORADO', 'COORDINADOR'])" routerLink="/preseleccion" class="nav-link">
+      <mat-icon class="icon-small">dashboard</mat-icon>
+      <span>Preselección</span>
+    </a>
+    <a *ngIf="authService.tieneRol(['RECTORADO', 'VICERRECTORADO', 'BIENESTAR', 'COORDINADOR'])" routerLink="/evaluacion" class="nav-link">
+      <mat-icon class="icon-small">fact_check</mat-icon>
+      <span>Evaluaciones</span>
+    </a>
+    <a *ngIf="authService.tieneRol(['ADMIN_TECNICO'])" href="http://127.0.0.1:8000/admin/" target="_blank" class="nav-link">
+      <mat-icon class="icon-small">admin_panel_settings</mat-icon>
+      <span>Django Admin</span>
+    </a>
+
+    <!-- Usuario activo -->
+    <div class="user-pill" title="Sesión activa">
+      <div class="user-avatar">
+        <mat-icon class="icon-xs">admin_panel_settings</mat-icon>
+      </div>
+      <div class="user-info">
+        <span class="user-name">{{ authService.usuarioActual()?.nombre || 'Dr. Santiago Muñoz' }}</span>
+        <span class="user-role">{{ authService.usuarioActual()?.nombreRol || 'Rectorado' }}</span>
+      </div>
+    </div>
+
+    <!-- Modo oscuro al lado de Salir -->
+    <button class="theme-toggle" (click)="toggleTheme()" title="Cambiar modo de color">
+      <mat-icon>{{ isDarkMode ? 'light_mode' : 'dark_mode' }}</mat-icon>
+    </button>
+
+    <!-- Salir -->
+    <button class="btn-logout" (click)="cerrarSesion()" title="Cerrar Sesión">
+      <mat-icon class="icon-small">logout</mat-icon>
+      <span>Salir</span>
+    </button>
+  </div>
+</nav>
+
+<!-- Cabecera y selector de convocatoria -->
+<header class="executive-header">
+  <div class="header-content">
+    <div class="header-main-row">
+      <div class="header-title-col">
+        <h1>Resultados y Ranking Final</h1>
+        <p class="header-desc">
+          Revisa a los mejores candidatos del concurso de méritos, genera la oferta de trabajo y aprueba la contratación.
+        </p>
+      </div>
+
+      <!-- Selector de convocatoria limpio -->
+      <div class="process-selector-wrap">
+        <label for="selectConvocatoria" class="selector-label">Convocatoria:</label>
+        <select
+          id="selectConvocatoria"
+          [(ngModel)]="convocatoriaSeleccionadaId"
+          (ngModelChange)="onConvocatoriaChange($event)"
+          class="select-process select-control">
+          @for (conv of convocatorias; track conv.id) {
+            <option [value]="conv.id">{{ conv.titulo }}</option>
+          }
+        </select>
+      </div>
+    </div>
+  </div>
+</header>
+
+<!-- Notificacion -->
+@if (notificacionAccion) {
+  <div class="floating-alert">
+    <mat-icon class="alert-icon">check_circle</mat-icon>
+    <span>{{ notificacionAccion }}</span>
+  </div>
+}
+
+<!-- Contenedor principal -->
+<main class="dashboard-container">
+
+  <!-- Tarjetas de resumen -->
+  <section class="kpis-section">
+    <div class="kpi-card">
+      <div class="kpi-icon-wrap primary">
+        <mat-icon>work_outline</mat-icon>
+      </div>
+      <div class="kpi-meta">
+        <span class="kpi-title">Vacantes Activas</span>
+        <span class="kpi-number">{{ metricas.vacantesActivas }}</span>
+        <span class="kpi-footnote">Procesos de selección en curso</span>
+      </div>
+    </div>
+
+    <div class="kpi-card">
+      <div class="kpi-icon-wrap teal">
+        <mat-icon>people_outline</mat-icon>
+      </div>
+      <div class="kpi-meta">
+        <span class="kpi-title">Total de Postulaciones</span>
+        <span class="kpi-number">{{ metricas.totalPostulaciones }}</span>
+        <span class="kpi-footnote">Hojas de vida recibidas</span>
+      </div>
+    </div>
+
+    <div class="kpi-card">
+      <div class="kpi-icon-wrap amber">
+        <mat-icon>speed</mat-icon>
+      </div>
+      <div class="kpi-meta">
+        <span class="kpi-title">Tiempo Promedio</span>
+        <div class="kpi-value-row">
+          <span class="kpi-number">{{ metricas.tiempoPromedioDias }}</span>
+          <span class="kpi-unit">días</span>
+        </div>
+        <span class="kpi-footnote">Duración del proceso</span>
+      </div>
+    </div>
+
+    <div class="kpi-card">
+      <div class="kpi-icon-wrap emerald">
+        <mat-icon>verified</mat-icon>
+      </div>
+      <div class="kpi-meta">
+        <span class="kpi-title">Aprobación en Clase</span>
+        <span class="kpi-number">{{ metricas.tasaEfectividad }}%</span>
+        <span class="kpi-footnote">Promedio de evaluaciones</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- Podio de los 3 mejores -->
+  @if (rankingCandidatos.length > 0) {
+    <section class="podium-section">
+    <div class="section-title-wrap">
+      <div class="title-left">
+        <mat-icon class="section-icon">workspace_premium</mat-icon>
+        <div>
+          <h2>Mejores Postulantes</h2>
+          <p class="section-subtitle">
+            Candidatos que alcanzaron las mejores puntuaciones en el proceso de selección. Puedes seleccionar a cualquiera de ellos para ofertar o contratar.
+          </p>
+        </div>
+      </div>
+
+      <div class="resolution-badge">
+        <mat-icon class="icon-xs">gavel</mat-icon>
+        <span>Resolución de Consejo: RES-ISTS-2026-084</span>
+      </div>
+    </div>
+
+    <!-- Podio -->
+    <div class="podium-grid">
+
+      <!-- Segundo lugar -->
+      @if (segundoLugar && candidatoSeleccionado) {
+        <article
+          class="podium-card rank-second"
+          [class.is-selected]="candidatoSeleccionado.id === segundoLugar.id"
+          (click)="seleccionarCandidato(segundoLugar)">
+          <div class="rank-header">
+            <div class="medal-badge silver">
+              <mat-icon>military_tech</mat-icon>
+              <span>2º PUESTO</span>
+            </div>
+            <span class="medal-tier">Medalla de Plata</span>
+          </div>
+
+          <div class="candidate-avatar-wrap">
+            <div class="avatar-circle silver-avatar">
+              {{ segundoLugar.iniciales }}
+            </div>
+          </div>
+
+          <h3 class="candidate-name">{{ segundoLugar.nombres }} {{ segundoLugar.apellidos }}</h3>
+          <p class="candidate-career">{{ segundoLugar.carrera }}</p>
+
+          <div class="score-display">
+            <span class="score-label">Puntaje Ponderado Final</span>
+            <div class="score-value-row">
+              <strong class="score-value">{{ segundoLugar.puntajeFinalPonderado }}</strong>
+              <span class="score-max">/ 100 pts</span>
+            </div>
+          </div>
+
+          <!-- Desglose de notas -->
+          <div class="score-breakdown">
+            <div class="breakdown-row">
+              <span class="row-label">Afinidad Curricular:</span>
+              <span class="row-val">{{ segundoLugar.puntajeMeritos }} pts</span>
+            </div>
+            <div class="breakdown-row">
+              <span class="row-label">Clase Demostrativa:</span>
+              <span class="row-val highlight">{{ segundoLugar.puntajeClaseDemostrativa }} pts</span>
+            </div>
+            <div class="breakdown-row">
+              <span class="row-label">Entrevista Personal:</span>
+              <span class="row-val">{{ segundoLugar.puntajeEntrevista }} pts</span>
+            </div>
+          </div>
+
+          <div class="reserve-status">
+            <button type="button" class="btn-select-candidato" (click)="$event.stopPropagation(); seleccionarCandidato(segundoLugar)">
+              <mat-icon class="icon-xs">{{ candidatoSeleccionado.id === segundoLugar.id ? 'check_circle' : 'person_add' }}</mat-icon>
+              <span>{{ candidatoSeleccionado.id === segundoLugar.id ? 'Seleccionada para Contratar' : 'Elegir esta Opción' }}</span>
+            </button>
+          </div>
+        </article>
+      }
+
+      <!-- Primer lugar -->
+      @if (ganador && candidatoSeleccionado) {
+        <article
+          class="podium-card rank-first winner-card"
+          [class.is-selected]="candidatoSeleccionado.id === ganador.id"
+          (click)="seleccionarCandidato(ganador)">
+          <div class="winner-crown-ribbon">
+            <mat-icon class="crown-icon">emoji_events</mat-icon>
+            <span>GANADOR DEL CONCURSO</span>
+          </div>
+
+          <div class="rank-header">
+            <div class="medal-badge gold">
+              <mat-icon>workspace_premium</mat-icon>
+              <span>1º PUESTO</span>
+            </div>
+            <span class="medal-tier gold-tier">Medalla de Oro • Elegido para Contratación</span>
+          </div>
+
+          <div class="candidate-avatar-wrap">
+            <div class="avatar-circle gold-avatar">
+              {{ ganador.iniciales }}
+            </div>
+            <div class="gold-star-badge">
+              <mat-icon class="star-icon">star</mat-icon>
+            </div>
+          </div>
+
+          <h3 class="candidate-name">{{ ganador.nombres }} {{ ganador.apellidos }}</h3>
+          <p class="candidate-career">{{ ganador.carrera }}</p>
+          <span class="candidate-id-meta">CI: {{ ganador.cedula }} • {{ ganador.correo }}</span>
+
+          <div class="score-display winner-score-box">
+            <span class="score-label">Puntaje Ponderado Final Oficial</span>
+            <div class="score-value-row">
+              <strong class="score-value gold-score">{{ ganador.puntajeFinalPonderado }}</strong>
+              <span class="score-max">/ 100 pts</span>
+            </div>
+          </div>
+
+          <!-- Desglose del ganador -->
+          <div class="score-breakdown winner-breakdown">
+            <div class="breakdown-row">
+              <span class="row-label">Afinidad Curricular:</span>
+              <span class="row-val">{{ ganador.puntajeMeritos }} pts</span>
+            </div>
+            <div class="breakdown-row">
+              <span class="row-label">Clase Demostrativa:</span>
+              <span class="row-val highlight-gold">{{ ganador.puntajeClaseDemostrativa }} pts</span>
+            </div>
+            <div class="breakdown-row">
+              <span class="row-label">Entrevista Personal:</span>
+              <span class="row-val">{{ ganador.puntajeEntrevista }} pts</span>
+            </div>
+          </div>
+
+          <!-- Estado del contrato del candidato seleccionado -->
+          <div class="winner-contract-status">
+            <span class="status-pill-label">Candidato Activo:</span>
+            <strong>{{ candidatoSeleccionado.nombres }} {{ candidatoSeleccionado.apellidos }}</strong>
+            <span
+              class="status-pill"
+              [ngClass]="candidatoSeleccionado.estadoContratacion === 'Contratación Aprobada' ? 'pill-approved' : (candidatoSeleccionado.estadoContratacion === 'Oferta Emitida' ? 'pill-offered' : 'pill-selected')">
+              <mat-icon class="icon-xs">
+                {{ candidatoSeleccionado.estadoContratacion === 'Contratación Aprobada' ? 'verified' : (candidatoSeleccionado.estadoContratacion === 'Oferta Emitida' ? 'outgoing_mail' : 'person_check') }}
+              </mat-icon>
+              {{ candidatoSeleccionado.estadoContratacion }}
+            </span>
+          </div>
+
+          <!-- Botones para el candidato seleccionado -->
+          <div class="winner-actions-group">
+            <button
+              type="button"
+              class="btn-action-offer"
+              [disabled]="candidatoSeleccionado.estadoContratacion === 'Contratación Aprobada'"
+              (click)="abrirModalOferta()">
+              <mat-icon class="icon-sm">mail</mat-icon>
+              <span>Generar Oferta</span>
+            </button>
+
+            <button
+              type="button"
+              class="btn-action-contract"
+              [disabled]="candidatoSeleccionado.estadoContratacion === 'Contratación Aprobada'"
+              (click)="abrirModalContratacion()">
+              <mat-icon class="icon-sm">how_to_reg</mat-icon>
+              <span>Aprobar Contratación</span>
+            </button>
+          </div>
+        </article>
+      }
+
+      <!-- Tercer lugar -->
+      @if (tercerLugar && candidatoSeleccionado) {
+        <article
+          class="podium-card rank-third"
+          [class.is-selected]="candidatoSeleccionado.id === tercerLugar.id"
+          (click)="seleccionarCandidato(tercerLugar)">
+          <div class="rank-header">
+            <div class="medal-badge bronze">
+              <mat-icon>military_tech</mat-icon>
+              <span>3º PUESTO</span>
+            </div>
+            <span class="medal-tier">Medalla de Bronce</span>
+          </div>
+
+          <div class="candidate-avatar-wrap">
+            <div class="avatar-circle bronze-avatar">
+              {{ tercerLugar.iniciales }}
+            </div>
+          </div>
+
+          <h3 class="candidate-name">{{ tercerLugar.nombres }} {{ tercerLugar.apellidos }}</h3>
+          <p class="candidate-career">{{ tercerLugar.carrera }}</p>
+
+          <div class="score-display">
+            <span class="score-label">Puntaje Ponderado Final</span>
+            <div class="score-value-row">
+              <strong class="score-value">{{ tercerLugar.puntajeFinalPonderado }}</strong>
+              <span class="score-max">/ 100 pts</span>
+            </div>
+          </div>
+
+          <!-- Desglose de notas -->
+          <div class="score-breakdown">
+            <div class="breakdown-row">
+              <span class="row-label">Afinidad Curricular:</span>
+              <span class="row-val">{{ tercerLugar.puntajeMeritos }} pts</span>
+            </div>
+            <div class="breakdown-row">
+              <span class="row-label">Clase Demostrativa:</span>
+              <span class="row-val highlight">{{ tercerLugar.puntajeClaseDemostrativa }} pts</span>
+            </div>
+            <div class="breakdown-row">
+              <span class="row-label">Entrevista Personal:</span>
+              <span class="row-val">{{ tercerLugar.puntajeEntrevista }} pts</span>
+            </div>
+          </div>
+
+          <div class="reserve-status">
+            <button type="button" class="btn-select-candidato" (click)="$event.stopPropagation(); seleccionarCandidato(tercerLugar)">
+              <mat-icon class="icon-xs">{{ candidatoSeleccionado.id === tercerLugar.id ? 'check_circle' : 'person_add' }}</mat-icon>
+              <span>{{ candidatoSeleccionado.id === tercerLugar.id ? 'Seleccionado para Contratar' : 'Elegir esta Opción' }}</span>
+            </button>
+          </div>
+        </article>
+      }
+
+    </div>
+  </section>
+
+  <!-- Tabla con todos los candidatos -->
+  <section class="resolution-table-section">
+    <div class="table-header-bar">
+      <div class="table-header-info">
+        <h3>Acta Oficial de Ponderación y Ranking Completo</h3>
+        <p class="table-header-sub">
+          Resultados consolidados de todas las etapas del proceso normado por el reglamento institucional del ISTS.
+        </p>
+      </div>
+
+      <div class="table-actions">
+        <span class="total-ranked">
+          Total de Postulantes Evaluados: <strong>{{ rankingCandidatos.length }}</strong>
+        </span>
+      </div>
+    </div>
+
+    <div class="table-card">
+      <div class="table-responsive">
+        <table class="modern-table">
+          <thead>
+            <tr>
+              <th class="th-pos">Lugar</th>
+              <th class="th-candidate">Docente Concursante</th>
+              <th class="th-meritos">Méritos Curriculares</th>
+              <th class="th-demo">Clase Demostrativa</th>
+              <th class="th-interview">Entrevista</th>
+              <th class="th-final">Nota Ponderada Final</th>
+              <th class="th-status">Estado del Trámite</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (candidato of rankingCandidatos; track candidato.id) {
+              <tr class="table-row" [class.winner-row]="candidato.posicion === 1">
+                <!-- Posicion -->
+                <td class="td-pos">
+                  <div class="pos-badge" [ngClass]="'pos-' + candidato.posicion">
+                    #{{ candidato.posicion }}
+                  </div>
+                </td>
+
+                <!-- Datos del postulante -->
+                <td class="td-candidate">
+                  <div class="candidate-meta-cell">
+                    <div class="mini-avatar" [ngClass]="'avatar-pos-' + candidato.posicion">
+                      {{ candidato.iniciales }}
+                    </div>
+                    <div>
+                      <strong class="name">{{ candidato.nombres }} {{ candidato.apellidos }}</strong>
+                      <span class="id">CI: {{ candidato.cedula }} • {{ candidato.correo }}</span>
+                    </div>
+                  </div>
+                </td>
+
+                <!-- Meritos -->
+                <td class="td-meritos">
+                  <span class="score-cell">{{ candidato.puntajeMeritos }} / 100</span>
+                </td>
+
+                <!-- Clase demostrativa -->
+                <td class="td-demo">
+                  <span class="score-cell highlight">{{ candidato.puntajeClaseDemostrativa }} / 100</span>
+                </td>
+
+                <!-- Entrevista -->
+                <td class="td-interview">
+                  <span class="score-cell">{{ candidato.puntajeEntrevista }} / 100</span>
+                </td>
+
+                <!-- Nota final -->
+                <td class="td-final">
+                  <div class="final-score-pill" [class.gold-final]="candidato.posicion === 1">
+                    <strong>{{ candidato.puntajeFinalPonderado }}</strong>
+                    <span class="pts-lbl">pts</span>
+                  </div>
+                </td>
+
+                <!-- Estado -->
+                <td class="td-status">
+                  <span
+                    class="status-cell-badge"
+                    [ngClass]="candidato.estadoContratacion === 'Contratación Aprobada' ? 'badge-approved' : (candidato.estadoContratacion === 'Oferta Emitida' ? 'badge-offered' : (candidato.posicion === 1 ? 'badge-selected' : 'badge-reserve'))">
+                    {{ candidato.estadoContratacion }}
+                  </span>
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+} @else {
+  <div class="empty-state-card" style="background: var(--bg-tarjetas); border: 1px solid var(--borde-tarjetas); border-radius: 16px; padding: 3.5rem 2rem; text-align: center; margin: 2rem 0; box-shadow: 0 4px 18px rgba(0,0,0,0.03);">
+    <mat-icon style="font-size: 54px; width: 54px; height: 54px; color: var(--color-primario); margin-bottom: 1.2rem;">leaderboard</mat-icon>
+    <h3 style="font-size: 1.35rem; font-weight: 700; margin-bottom: 0.6rem; color: var(--texto-principal);">Aún no hay postulantes calificados para esta convocatoria</h3>
+    <p style="color: var(--texto-secundario); font-size: 0.95rem; max-width: 580px; margin: 0 auto 1.5rem; line-height: 1.6;">
+      Los candidatos que postulen a <strong>{{ convocatoriaActual.titulo }}</strong> y completen las fases de preselección, clase demostrativa y entrevistas aparecerán ponderados automáticamente en este cuadro de honor.
+    </p>
+  </div>
+}
+
+</main>
+
+<!-- Modal para generar oferta -->
+@if (modalOfertaAbierto && candidatoSeleccionado) {
+  <div class="modal-backdrop" (click)="cerrarModalOferta()">
+    <div class="modal-dialog" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <div class="header-icon-box">
+          <mat-icon>mail_outline</mat-icon>
+        </div>
+        <div>
+          <h3>Generar Oferta de Trabajo</h3>
+          <p class="modal-sub">Define las condiciones laborales para el candidato seleccionado.</p>
+        </div>
+        <button type="button" class="btn-close" (click)="cerrarModalOferta()">
+          <mat-icon>close</mat-icon>
+        </button>
+      </div>
+
+      <div class="modal-body">
+        <!-- Datos del candidato seleccionado -->
+        <div class="winner-preview-banner">
+          <div class="avatar-circle gold-avatar mini">
+            {{ candidatoSeleccionado.iniciales }}
+          </div>
+          <div>
+            <strong>{{ candidatoSeleccionado.nombres }} {{ candidatoSeleccionado.apellidos }}</strong>
+            <p>{{ candidatoSeleccionado.posicion }}º Puesto • Puntaje Oficial: {{ candidatoSeleccionado.puntajeFinalPonderado }} / 100 pts</p>
+          </div>
+        </div>
+
+        <!-- Formulario de la oferta -->
+        <div class="form-grid">
+          <div class="form-group full-width">
+            <label for="cargoOferta">Cargo a Desempeñar</label>
+            <input
+              id="cargoOferta"
+              type="text"
+              [(ngModel)]="formularioOferta.cargo"
+              class="form-control"
+            />
+          </div>
+
+          <div class="form-group">
+            <label for="remuneracion">Sueldo Mensual en Dólares</label>
+            <input
+              id="remuneracion"
+              type="number"
+              [(ngModel)]="formularioOferta.remuneracionMensual"
+              class="form-control"
+            />
+          </div>
+
+          <div class="form-group">
+            <label for="jornada">Horario de Trabajo</label>
+            <input
+              id="jornada"
+              type="text"
+              [(ngModel)]="formularioOferta.tipoJornada"
+              class="form-control"
+            />
+          </div>
+
+          <div class="form-group">
+            <label for="fechaInicio">Fecha de Inicio</label>
+            <input
+              id="fechaInicio"
+              type="date"
+              [(ngModel)]="formularioOferta.fechaInicioLabores"
+              class="form-control"
+            />
+          </div>
+
+          <div class="form-group">
+            <label for="periodo">Periodo Académico</label>
+            <input
+              id="periodo"
+              type="text"
+              [(ngModel)]="formularioOferta.periodoAcademico"
+              class="form-control"
+            />
+          </div>
+
+          <div class="form-group full-width">
+            <label for="observaciones">Condiciones y Observaciones</label>
+            <textarea
+              id="observaciones"
+              rows="3"
+              [(ngModel)]="formularioOferta.observaciones"
+              class="form-control"
+            ></textarea>
+          </div>
+        </div>
+      </div>
+
+      <div class="modal-footer">
+        <button type="button" class="btn-cancel" (click)="cerrarModalOferta()">
+          Cancelar
+        </button>
+        <button
+          type="button"
+          class="btn-confirm-offer"
+          [disabled]="guardandoAccion"
+          (click)="confirmarOferta()">
+          @if (!guardandoAccion) {
+            <mat-icon>send</mat-icon>
+            <span>Emitir Oferta y Notificar al Docente</span>
+          } @else {
+            <span class="spinner"></span>
+            <span>Emitiendo oferta...</span>
+          }
+        </button>
+      </div>
+    </div>
+  </div>
+}
+
+<!-- Modal para aprobar contratacion -->
+@if (modalContratacionAbierto && candidatoSeleccionado) {
+  <div class="modal-backdrop" (click)="cerrarModalContratacion()">
+    <div class="modal-dialog" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <div class="header-icon-box success-icon">
+          <mat-icon>how_to_reg</mat-icon>
+        </div>
+        <div>
+          <h3>Aprobación de Contratación</h3>
+          <p class="modal-sub">Formalización de resolución emitida por Rectorado y Consejo Directivo.</p>
+        </div>
+        <button type="button" class="btn-close" (click)="cerrarModalContratacion()">
+          <mat-icon>close</mat-icon>
+        </button>
+      </div>
+
+      <div class="modal-body">
+        <div class="contract-approval-summary">
+          <div class="approval-icon-big">
+            <mat-icon>verified</mat-icon>
+          </div>
+          <h4>Resolución Oficial RES-ISTS-2026-084</h4>
+          <p class="approval-text">
+            Se autoriza la contratación definitiva del docente <strong>{{ candidatoSeleccionado.nombres }} {{ candidatoSeleccionado.apellidos }}</strong> para asumir el cargo en la carrera de <strong>{{ candidatoSeleccionado.carrera }}</strong> con inicio el <strong>03 de Noviembre de 2026</strong>.
+          </p>
+
+          <div class="legal-checklist">
+            <div class="check-item">
+              <mat-icon class="check-ok">check_circle</mat-icon>
+              <span>Méritos y verificación Senescyt validados por Talento Humano.</span>
+            </div>
+            <div class="check-item">
+              <mat-icon class="check-ok">check_circle</mat-icon>
+              <span>Clase demostrativa evaluada favorablemente por Vicerrectorado Académico.</span>
+            </div>
+            <div class="check-item">
+              <mat-icon class="check-ok">check_circle</mat-icon>
+              <span>Disponibilidad presupuestaria acreditada por Dirección Administrativa Financiera.</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="modal-footer">
+        <button type="button" class="btn-cancel" (click)="cerrarModalContratacion()">
+          Cancelar
+        </button>
+        <button
+          type="button"
+          class="btn-confirm-contract"
+          [disabled]="guardandoAccion"
+          (click)="confirmarContratacion()">
+          @if (!guardandoAccion) {
+            <mat-icon>gavel</mat-icon>
+            <span>Aprobar y Formalizar Contrato</span>
+          } @else {
+            <span class="spinner"></span>
+            <span>Procesando contratación...</span>
+          }
+        </button>
+      </div>
+    </div>
+  </div>
+}

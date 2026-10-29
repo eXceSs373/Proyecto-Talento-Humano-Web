@@ -1,0 +1,387 @@
+<!-- Barra de navegacion -->
+<nav class="navbar">
+  <div class="logo-container">
+    <a routerLink="/inicio" class="logo-link">
+      <div class="logo-slot" title="Logo Institucional ISTS">
+        <img src="logos/ISTS.svg" alt="Instituto Superior Tecnológico Sudamericano" class="logo-img" />
+      </div>
+      <div class="system-branding">
+        <h2 class="logo">Talento <span>Humano</span></h2>
+        <span class="sub-brand">Acceso al Sistema</span>
+      </div>
+    </a>
+  </div>
+
+  <div class="nav-links">
+    <a routerLink="/inicio" class="nav-link">
+      <mat-icon class="icon-small">arrow_back</mat-icon>
+      Volver a Inicio
+    </a>
+
+    <!-- Para el modo oscuro -->
+    <button class="theme-toggle" (click)="toggleTheme()" title="Cambiar tema">
+      <mat-icon>{{ isDarkMode ? 'light_mode' : 'dark_mode' }}</mat-icon>
+    </button>
+  </div>
+</nav>
+
+<!-- Contenido del login -->
+<main class="login-page-container">
+  
+  <div class="login-wrapper">
+    
+    <!-- Tarjeta del formulario -->
+    <div class="auth-card">
+      
+      <!-- Titulo institucional -->
+      <div class="auth-header">
+        <div class="auth-icon-wrap">
+          <mat-icon class="auth-icon">verified_user</mat-icon>
+        </div>
+        <h1>Acceso al Sistema</h1>
+        <p class="auth-subtitle">
+          Sistema Oficial de Reclutamiento y Selección de Personal del Instituto Superior Tecnológico Sudamericano.
+        </p>
+      </div>
+
+      <!-- Pestanas para cambiar entre login y registro -->
+      <div class="auth-tabs">
+        <button
+          type="button"
+          class="tab-btn"
+          [class.active]="pestanaActual === 'login'"
+          (click)="pestanaActual = 'login'">
+          <mat-icon class="icon-xs">login</mat-icon>
+          <span>Iniciar Sesión</span>
+        </button>
+        <button
+          type="button"
+          class="tab-btn"
+          [class.active]="pestanaActual === 'registro'"
+          (click)="pestanaActual = 'registro'">
+          <mat-icon class="icon-xs">person_add</mat-icon>
+          <span>Registro de Postulante</span>
+        </button>
+      </div>
+
+      <!-- Alertas de error o exito -->
+      @if (mensajeError) {
+        <div class="alert-box error">
+          <mat-icon class="alert-icon">error_outline</mat-icon>
+          <span>{{ mensajeError }}</span>
+        </div>
+      }
+
+      @if (mensajeExito) {
+        <div class="alert-box success">
+          <mat-icon class="alert-icon">check_circle</mat-icon>
+          <span>{{ mensajeExito }}</span>
+        </div>
+      }
+
+      <!-- Formulario para iniciar sesion -->
+      @if (pestanaActual === 'login') {
+        <form (ngSubmit)="iniciarSesion()" class="auth-form">
+          
+          <div class="form-group">
+            <label for="identificacion">Cédula de Identidad o Correo Institucional</label>
+            <div class="input-with-icon">
+              <mat-icon class="input-icon">person</mat-icon>
+              <input
+                id="identificacion"
+                type="text"
+                name="identificacion"
+                [(ngModel)]="formularioLogin.identificacion"
+                placeholder="Ej. 1104829102 o usuario@ists.edu.ec"
+                class="form-control"
+                autocomplete="username"
+              />
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label for="contrasenia">Contraseña de Acceso</label>
+            <div class="input-with-icon">
+              <mat-icon class="input-icon">lock</mat-icon>
+              <input
+                id="contrasenia"
+                type="password"
+                name="contrasenia"
+                [(ngModel)]="formularioLogin.contrasenia"
+                placeholder="Ingresa tu contraseña"
+                class="form-control"
+                autocomplete="current-password"
+              />
+            </div>
+          </div>
+
+          <div class="form-options">
+            <label class="remember-label">
+              <input
+                type="checkbox"
+                name="recordarme"
+                [(ngModel)]="formularioLogin.recordarme"
+              />
+              <span>Recordar mis datos en este equipo</span>
+            </label>
+            <a routerLink="/inicio" class="forgot-link">¿Ayuda con tu cuenta?</a>
+          </div>
+
+          <button
+            type="submit"
+            class="btn-primary-auth"
+            [disabled]="cargando">
+            @if (!cargando) {
+              <mat-icon class="icon-sm">arrow_forward</mat-icon>
+              <span>Acceder al Sistema</span>
+            } @else {
+              <span class="spinner"></span>
+              <span>Validando credenciales...</span>
+            }
+          </button>
+
+        </form>
+
+        <!-- Botones rapidos para probar los roles -->
+        <div class="demo-logins-section">
+          <div class="demo-divider">
+            <span>Accesos Rápidos de Prueba para Evaluación</span>
+          </div>
+          <p class="demo-sub">
+            Pulsa en cualquiera de los roles institucionales para ingresar directamente a su vista correspondiente:
+          </p>
+
+          <div class="demo-buttons-grid">
+            
+            <!-- 1. Rol Administrador Tecnico -->
+            <button
+              type="button"
+              class="btn-demo-role admin"
+              (click)="accesoDemo('ADMIN_TECNICO')"
+              title="Acceso al Panel de Administrador y Creacion de Convocatorias">
+              <div class="demo-role-icon">
+                <mat-icon>settings_suggest</mat-icon>
+              </div>
+              <div class="demo-role-meta">
+                <strong>Administrador Técnico</strong>
+                <span>Creación de Convocatorias y Gestión</span>
+              </div>
+            </button>
+
+            <!-- 2. Rol Talento Humano -->
+            <button
+              type="button"
+              class="btn-demo-role th"
+              (click)="accesoDemo('TALENTO_HUMANO')"
+              title="Acceso al Tablero de Preseleccion y Ofertas">
+              <div class="demo-role-icon">
+                <mat-icon>folder_shared</mat-icon>
+              </div>
+              <div class="demo-role-meta">
+                <strong>Dirección de Talento Humano</strong>
+                <span>Preselección, Convocatorias y Ofertas</span>
+              </div>
+            </button>
+
+            <!-- 3. Rol Postulante -->
+            <button
+              type="button"
+              class="btn-demo-role post"
+              (click)="accesoDemo('POSTULANTE')"
+              title="Acceso al Tablero de Mi Postulacion">
+              <div class="demo-role-icon">
+                <mat-icon>school</mat-icon>
+              </div>
+              <div class="demo-role-meta">
+                <strong>Postulante Concursante</strong>
+                <span>Consulta de Estado y Resultados</span>
+              </div>
+            </button>
+
+            <!-- 4. Rol Rectorado -->
+            <button
+              type="button"
+              class="btn-demo-role rectorado"
+              (click)="accesoDemo('RECTORADO')"
+              title="Acceso a Ranking y Aprobacion Final de Contratacion">
+              <div class="demo-role-icon">
+                <mat-icon>account_balance</mat-icon>
+              </div>
+              <div class="demo-role-meta">
+                <strong>Rectorado</strong>
+                <span>Ranking Final y Autorización de Contratación</span>
+              </div>
+            </button>
+
+            <!-- 5. Rol Vicerrectorado Academico -->
+            <button
+              type="button"
+              class="btn-demo-role vice"
+              (click)="accesoDemo('VICERRECTORADO')"
+              title="Acceso a Evaluaciones Academicas y Clases Demostrativas">
+              <div class="demo-role-icon">
+                <mat-icon>menu_book</mat-icon>
+              </div>
+              <div class="demo-role-meta">
+                <strong>Vicerrectorado Académico</strong>
+                <span>Clase Demostrativa y Desempeño</span>
+              </div>
+            </button>
+
+            <!-- 6. Rol Bienestar Estudiantil -->
+            <button
+              type="button"
+              class="btn-demo-role bienestar"
+              (click)="accesoDemo('BIENESTAR')"
+              title="Acceso a Evaluaciones Psicologicas">
+              <div class="demo-role-icon">
+                <mat-icon>psychology</mat-icon>
+              </div>
+              <div class="demo-role-meta">
+                <strong>Bienestar Estudiantil</strong>
+                <span>Evaluación y Test Psicológico</span>
+              </div>
+            </button>
+
+            <!-- 7. Rol Coordinador de Carrera -->
+            <button
+              type="button"
+              class="btn-demo-role coord"
+              (click)="accesoDemo('COORDINADOR')"
+              title="Acceso a Evaluacion Tecnica de su Carrera">
+              <div class="demo-role-icon">
+                <mat-icon>assignment_turned_in</mat-icon>
+              </div>
+              <div class="demo-role-meta">
+                <strong>Coordinador de Carrera</strong>
+                <span>Revisión de Perfiles y Clase Demostrativa</span>
+              </div>
+            </button>
+
+          </div>
+        </div>
+      }
+
+      <!-- Formulario para registrar un postulante -->
+      @if (pestanaActual === 'registro') {
+        <form (ngSubmit)="registrarPostulante()" class="auth-form">
+          
+          <div class="form-row-dual">
+            <div class="form-group">
+              <label for="regNombres">Nombres Completos</label>
+              <input
+                id="regNombres"
+                type="text"
+                name="regNombres"
+                [(ngModel)]="formularioRegistro.nombres"
+                placeholder="Ej. Carlos Andrés"
+                class="form-control"
+              />
+            </div>
+            <div class="form-group">
+              <label for="regApellidos">Apellidos Completos</label>
+              <input
+                id="regApellidos"
+                type="text"
+                name="regApellidos"
+                [(ngModel)]="formularioRegistro.apellidos"
+                placeholder="Ej. Mendoza Alvarado"
+                class="form-control"
+              />
+            </div>
+          </div>
+
+          <div class="form-row-dual">
+            <div class="form-group">
+              <label for="regCedula">Cédula de Identidad</label>
+              <input
+                id="regCedula"
+                type="text"
+                name="regCedula"
+                [(ngModel)]="formularioRegistro.cedula"
+                placeholder="1104829102"
+                class="form-control"
+              />
+            </div>
+            <div class="form-group">
+              <label for="regTelefono">Teléfono Celular</label>
+              <input
+                id="regTelefono"
+                type="tel"
+                name="regTelefono"
+                [(ngModel)]="formularioRegistro.telefono"
+                placeholder="0987654321"
+                class="form-control"
+              />
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label for="regCorreo">Correo Electrónico Personal</label>
+            <input
+              id="regCorreo"
+              type="email"
+              name="regCorreo"
+              [(ngModel)]="formularioRegistro.correo"
+              placeholder="carlos.mendoza@email.com"
+              class="form-control"
+            />
+          </div>
+
+          <div class="form-row-dual">
+            <div class="form-group">
+              <label for="regContrasenia">Contraseña</label>
+              <input
+                id="regContrasenia"
+                type="password"
+                name="regContrasenia"
+                [(ngModel)]="formularioRegistro.contrasenia"
+                placeholder="Mínimo 6 caracteres"
+                class="form-control"
+              />
+            </div>
+            <div class="form-group">
+              <label for="regConfirmar">Confirmar Contraseña</label>
+              <input
+                id="regConfirmar"
+                type="password"
+                name="regConfirmar"
+                [(ngModel)]="formularioRegistro.confirmarContrasenia"
+                placeholder="Repite tu contraseña"
+                class="form-control"
+              />
+            </div>
+          </div>
+
+          <div class="form-options">
+            <label class="remember-label">
+              <input
+                type="checkbox"
+                name="aceptaTerminos"
+                [(ngModel)]="formularioRegistro.aceptaTerminos"
+              />
+              <span>Autorizo el tratamiento de mis datos personales para procesos de selección del ISTS.</span>
+            </label>
+          </div>
+
+          <button
+            type="submit"
+            class="btn-primary-auth"
+            [disabled]="cargando">
+            @if (!cargando) {
+              <mat-icon class="icon-sm">person_add</mat-icon>
+              <span>Registrar Cuenta y Postularme</span>
+            } @else {
+              <span class="spinner"></span>
+              <span>Creando cuenta...</span>
+            }
+          </button>
+
+        </form>
+      }
+
+    </div>
+
+  </div>
+
+</main>

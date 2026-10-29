@@ -1,0 +1,599 @@
+<!-- Barra de navegacion -->
+<nav class="navbar">
+  <div class="logo-container">
+    <a routerLink="/inicio" class="logo-link">
+      <div class="logo-slot" title="Logo Institucional ISTS">
+        <img src="logos/ISTS.svg" alt="Instituto Superior Tecnológico Sudamericano" class="logo-img" />
+      </div>
+      <div class="system-branding">
+        <h2 class="logo">Mi <span>Postulación</span></h2>
+        <span class="sub-brand">Seguimiento del Postulante</span>
+      </div>
+    </a>
+  </div>
+
+  <div class="nav-links">
+    <a routerLink="/inicio" class="nav-link">
+      <mat-icon class="icon-small">work_outline</mat-icon>
+      <span>Convocatorias</span>
+    </a>
+
+    <!-- Usuario activo -->
+    <div class="user-chip" title="Postulante autenticado">
+      <div class="avatar-circle">
+        <mat-icon class="icon-xs">school</mat-icon>
+      </div>
+      <div class="user-chip-info">
+        <span class="user-name">{{ obtenerNombreCompleto() }}</span>
+        <span class="user-badge">Postulante</span>
+      </div>
+    </div>
+
+    <!-- Modo oscuro al lado de Salir -->
+    <button class="theme-toggle" (click)="toggleTheme()" title="Cambiar modo de color">
+      <mat-icon>{{ isDarkMode ? 'light_mode' : 'dark_mode' }}</mat-icon>
+    </button>
+
+    <!-- Salir -->
+    <button class="btn-logout" (click)="cerrarSesion()" title="Cerrar Sesión">
+      <mat-icon class="icon-small">logout</mat-icon>
+      <span>Salir</span>
+    </button>
+  </div>
+</nav>
+
+<!-- Notificacion -->
+@if (notificacionMensaje) {
+  <div class="toast-notification" [ngClass]="notificacionTipo">
+    <mat-icon class="toast-icon">
+      {{ notificacionTipo === 'exito' ? 'check_circle' : notificacionTipo === 'alerta' ? 'warning' : 'info' }}
+    </mat-icon>
+    <span>{{ notificacionMensaje }}</span>
+  </div>
+}
+
+<!-- Contenedor principal -->
+<main class="tracking-container">
+
+  <!-- Cabecera de la postulacion -->
+  <header class="applicant-hero-card">
+    <div class="hero-left">
+      <div class="avatar-box">
+        <span class="initials">{{ obtenerIniciales() }}</span>
+      </div>
+      <div class="applicant-details">
+        <div class="tags-row">
+          @if (postulacion) {
+            <span class="tramite-pill">Trámite N° {{ postulacion.numeroTramite }}</span>
+            <span class="badge-status" [ngClass]="postulacion.tipoEstado">
+              <mat-icon class="icon-xs">fiber_manual_record</mat-icon>
+              {{ postulacion.estadoGeneral }}
+            </span>
+          } @else {
+            <span class="tramite-pill">Aspirante Registrado</span>
+            <span class="badge-status pendiente">
+              <mat-icon class="icon-xs">info</mat-icon>
+              Sin Postulación Activa
+            </span>
+          }
+        </div>
+        <h1 class="applicant-full-name">{{ obtenerNombreCompleto() }}</h1>
+        <p class="applicant-title">
+          <mat-icon class="icon-xs">badge</mat-icon>
+          {{ postulacion?.tituloProfesional || 'Aspirante Concursante ISTS' }}
+        </p>
+
+        <div class="applicant-meta-chips">
+          <span class="meta-chip">
+            <mat-icon class="icon-xs">pin</mat-icon>
+            Cédula: {{ obtenerCedula() }}
+          </span>
+          <span class="meta-chip">
+            <mat-icon class="icon-xs">mail</mat-icon>
+            {{ obtenerCorreo() }}
+          </span>
+          <span class="meta-chip">
+            <mat-icon class="icon-xs">call</mat-icon>
+            {{ obtenerTelefono() }}
+          </span>
+          @if (postulacion) {
+            <span class="meta-chip">
+              <mat-icon class="icon-xs">calendar_today</mat-icon>
+              Fecha de postulación: {{ postulacion.fechaPostulacion }}
+            </span>
+          }
+        </div>
+      </div>
+    </div>
+
+    <div class="hero-right">
+      <div class="summary-kpi-box">
+        <span class="kpi-label">Progreso del Proceso</span>
+        <div class="kpi-number-row">
+          <span class="kpi-current-step">{{ postulacion ? postulacion.etapaNombre : 'En Proceso' }}</span>
+        </div>
+        <span class="kpi-desc">Fase Oficial del Concurso de Méritos</span>
+      </div>
+    </div>
+  </header>
+
+  <!-- Estado de carga -->
+  @if (cargando) {
+    <div class="tracking-loading-card">
+      <div class="loading-spinner"></div>
+      <p>Cargando información de tu expediente en el sistema...</p>
+    </div>
+  } @else if (!postulacion) {
+    <!-- Estado vacio: el usuario aun no tiene postulaciones -->
+    <section class="empty-applications-card">
+      <div class="empty-icon-wrap">
+        <mat-icon class="big-empty-icon">work_outline</mat-icon>
+      </div>
+      <h2>¡Bienvenido, {{ obtenerPrimerNombre() }}!</h2>
+      <p class="empty-main-text">Actualmente no tienes ninguna postulación activa en el sistema.</p>
+      <p class="empty-sub-text">
+        Explora las convocatorias docentes y administrativas vigentes del Instituto Superior Tecnológico Sudamericano y postula con tu perfil profesional para iniciar el proceso de selección.
+      </p>
+
+      <div class="empty-actions">
+        <a routerLink="/inicio" class="btn-explore-vacancies">
+          <mat-icon class="icon-sm">search</mat-icon>
+          <span>Explorar Convocatorias Vigentes</span>
+        </a>
+      </div>
+
+      <div class="empty-steps-preview">
+        <h3>¿Cómo funciona el proceso de selección institucional?</h3>
+        <div class="preview-grid">
+          <div class="preview-step">
+            <div class="step-num-badge">1</div>
+            <strong>Revisa la Convocatoria</strong>
+            <p>Consulta las bases, requisitos académicos y cátedras ofertadas en la plataforma.</p>
+          </div>
+          <div class="preview-step">
+            <div class="step-num-badge">2</div>
+            <strong>Postula en Línea</strong>
+            <p>Adjunta tu Hoja de Vida en formato PDF y completa tu información curricular.</p>
+          </div>
+          <div class="preview-step">
+            <div class="step-num-badge">3</div>
+            <strong>Seguimiento en Vivo</strong>
+            <p>Revisa desde este panel tus avances, notificaciones de oferta y calificaciones.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+  } @else {
+    <!-- Barra de las 7 etapas -->
+    <section class="stepper-section">
+      <div class="stepper-header-row">
+        <h3>Cronograma y Avance de tu Trámite</h3>
+        <span class="stepper-info-note">Conforme al Reglamento de Méritos y Oposición del ISTS</span>
+      </div>
+
+      <div class="stages-tracker">
+        @for (etapa of etapas; track etapa.numero) {
+          <div class="stage-step"
+            [class.completed]="etapa.numero < postulacion.etapaActual"
+            [class.active]="etapa.numero === postulacion.etapaActual"
+            [class.pending]="etapa.numero > postulacion.etapaActual">
+            
+            <div class="step-circle">
+              @if (etapa.numero < postulacion.etapaActual) {
+                <mat-icon class="icon-sm">check</mat-icon>
+              } @else {
+                <span>{{ etapa.numero }}</span>
+              }
+            </div>
+
+            <div class="step-text">
+              <span class="step-name">{{ etapa.nombre }}</span>
+              <span class="step-badge">
+                @if (etapa.numero < postulacion.etapaActual) {
+                  Completada
+                } @else if (etapa.numero === postulacion.etapaActual) {
+                  En curso
+                } @else {
+                  Pendiente
+                }
+              </span>
+            </div>
+
+            @if (etapa.numero < 7) {
+              <div class="connector-line"></div>
+            }
+          </div>
+        }
+      </div>
+    </section>
+
+    <!-- Contenido en dos columnas -->
+    <div class="main-dashboard-grid">
+
+      <!-- Columna izquierda -->
+      <div class="left-column">
+
+        <!-- Datos de la convocatoria -->
+        <section class="info-card job-details-card">
+          <div class="card-title-bar">
+            <div class="title-with-icon">
+              <mat-icon class="title-icon">work</mat-icon>
+              <div>
+                <h3>Convocatoria a la que estás postulando</h3>
+                <p class="card-subtitle">Detalles de la cátedra institucional y condiciones de contratación</p>
+              </div>
+            </div>
+            <span class="card-tag">{{ postulacion.area }}</span>
+          </div>
+
+          <div class="job-meta-grid">
+            <div class="job-meta-item full">
+              <span class="meta-label">Puesto Convocado</span>
+              <strong class="job-heading">{{ postulacion.vacanteTitulo }}</strong>
+            </div>
+
+            <div class="job-meta-item">
+              <span class="meta-label">Carrera de Destino</span>
+              <span class="meta-value">
+                <mat-icon class="icon-xs">school</mat-icon>
+                {{ postulacion.carrera }}
+              </span>
+            </div>
+
+            <div class="job-meta-item">
+              <span class="meta-label">Modalidad y Campus</span>
+              <span class="meta-value">
+                <mat-icon class="icon-xs">location_on</mat-icon>
+                {{ postulacion.modalidad }} • {{ postulacion.campus }}
+              </span>
+            </div>
+          </div>
+        </section>
+
+        <!-- Oferta laboral -->
+        @if (postulacion.etapaActual === 4 && postulacion.ofertaLaboral) {
+          <section class="info-card action-card offer-card">
+            <div class="card-title-bar">
+              <div class="title-with-icon">
+                <mat-icon class="title-icon offer-icon">handshake</mat-icon>
+                <div>
+                  <h3>Oferta Laboral Preliminar Emitida</h3>
+                  <p class="card-subtitle">Talento Humano ha revisado tu carpeta y presenta la siguiente propuesta</p>
+                </div>
+              </div>
+              <span class="response-status-badge" [ngClass]="postulacion.ofertaLaboral.estadoRespuesta.toLowerCase()">
+                {{ postulacion.ofertaLaboral.estadoRespuesta }}
+              </span>
+            </div>
+
+            <div class="offer-details-body">
+              <div class="offer-highlight-row">
+                <div class="highlight-box">
+                  <span class="highlight-label">Remuneración Mensual</span>
+                  <span class="highlight-val">${{ postulacion.ofertaLaboral.remuneracionMensual }}.00 USD</span>
+                </div>
+                <div class="highlight-box">
+                  <span class="highlight-label">Jornada Asignada</span>
+                  <span class="highlight-val">{{ postulacion.ofertaLaboral.jornada }}</span>
+                </div>
+                <div class="highlight-box">
+                  <span class="highlight-label">Inicio Tentativo</span>
+                  <span class="highlight-val">{{ postulacion.ofertaLaboral.fechaInicio }}</span>
+                </div>
+                <div class="highlight-box">
+                  <span class="highlight-label">Fecha Límite Respuesta</span>
+                  <span class="highlight-val deadline">{{ postulacion.ofertaLaboral.fechaLimiteRespuesta }}</span>
+                </div>
+              </div>
+
+              <div class="benefits-section">
+                <h4>Beneficios Institucionales Incluidos</h4>
+                <ul class="benefits-list">
+                  @for (beneficio of postulacion.ofertaLaboral.beneficios; track beneficio) {
+                    <li>
+                      <mat-icon class="check-icon">check_circle</mat-icon>
+                      <span>{{ beneficio }}</span>
+                    </li>
+                  }
+                </ul>
+              </div>
+
+              <p class="offer-note">
+                <strong>Nota importante:</strong> {{ postulacion.ofertaLaboral.observaciones }}
+              </p>
+
+              @if (postulacion.ofertaLaboral.estadoRespuesta === 'Pendiente') {
+                <div class="offer-decision-actions">
+                  <button
+                    type="button"
+                    class="btn-accept-offer"
+                    (click)="aceptarOferta()"
+                    [disabled]="procesandoAccion">
+                    <mat-icon class="icon-sm">check_circle</mat-icon>
+                    <span>Aceptar Oferta Laboral</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    class="btn-reject-offer"
+                    (click)="rechazarOferta()"
+                    [disabled]="procesandoAccion">
+                    <mat-icon class="icon-sm">cancel</mat-icon>
+                    <span>Rechazar Oferta</span>
+                  </button>
+                </div>
+              } @else if (postulacion.ofertaLaboral.estadoRespuesta === 'Aceptada') {
+                <div class="decision-resolved accepted">
+                  <mat-icon class="icon-sm">check_circle</mat-icon>
+                  <span>Has aceptado formalmente esta oferta preliminar. Tu proceso continúa hacia la clase demostrativa.</span>
+                </div>
+              } @else {
+                <div class="decision-resolved rejected">
+                  <mat-icon class="icon-sm">cancel</mat-icon>
+                  <span>Has declinado esta oferta laboral. Tu postulación ha finalizado.</span>
+                </div>
+              }
+            </div>
+          </section>
+        }
+
+        <!-- Citacion a clase demostrativa -->
+        @if (postulacion.etapaActual === 5 && postulacion.citaClase) {
+          <section class="info-card action-card demo-class-card">
+            <div class="card-title-bar">
+              <div class="title-with-icon">
+                <mat-icon class="title-icon">fact_check</mat-icon>
+                <div>
+                  <h3>Convocatoria a Clase Demostrativa</h3>
+                  <p class="card-subtitle">Oposición pedagógica ante la Comisión Evaluadora del ISTS</p>
+                </div>
+              </div>
+              <span class="card-tag stage-tag">Clase Demostrativa</span>
+            </div>
+
+            <div class="demo-class-body">
+              <div class="class-info-grid">
+                <div class="class-info-item full">
+                  <span class="info-label">Tema Asignado para la Cátedra</span>
+                  <strong class="theme-text">{{ postulacion.citaClase.temaAsignado }}</strong>
+                </div>
+                <div class="class-info-item">
+                  <span class="info-label">Fecha y Hora Programada</span>
+                  <span class="info-val highlight">
+                    <mat-icon class="icon-xs">schedule</mat-icon>
+                    {{ postulacion.citaClase.fechaHora }}
+                  </span>
+                </div>
+                <div class="class-info-item">
+                  <span class="info-label">Aula o Laboratorio Asignado</span>
+                  <span class="info-val">
+                    <mat-icon class="icon-xs">meeting_room</mat-icon>
+                    {{ postulacion.citaClase.laboratorio }}
+                  </span>
+                </div>
+                <div class="class-info-item">
+                  <span class="info-label">Asignatura</span>
+                  <span class="info-val">{{ postulacion.citaClase.asignatura }}</span>
+                </div>
+                <div class="class-info-item">
+                  <span class="info-label">Duración</span>
+                  <span class="info-val">{{ postulacion.citaClase.duracionEstimada }}</span>
+                </div>
+              </div>
+
+              <div class="recommendations-box">
+                <h4>Recomendaciones y Criterios Institucionales</h4>
+                <ul>
+                  @for (rec of postulacion.citaClase.recomendaciones; track rec) {
+                    <li>
+                      <mat-icon class="icon-xs bullet-icon">arrow_right</mat-icon>
+                      <span>{{ rec }}</span>
+                    </li>
+                  }
+                </ul>
+              </div>
+            </div>
+          </section>
+        }
+
+        <!-- Resultados y notas -->
+        @if (postulacion.etapaActual >= 6 && postulacion.dictamenFinal) {
+          <section class="info-card action-card final-results-card">
+            <div class="card-title-bar">
+              <div class="title-with-icon">
+                <mat-icon class="title-icon trophy-icon">workspace_premium</mat-icon>
+                <div>
+                  <h3>Resultados Oficiales del Concurso</h3>
+                  <p class="card-subtitle">Puntaje ponderado definitivo y acta de elegibilidad institucional</p>
+                </div>
+              </div>
+              <span class="winner-pill">
+                <mat-icon class="icon-xs">military_tech</mat-icon>
+                {{ postulacion.dictamenFinal.estadoContratacion }}
+              </span>
+            </div>
+
+            <div class="results-body">
+              <div class="scores-summary-grid">
+                <div class="score-card final-score">
+                  <span class="score-label">Nota Final Ponderada</span>
+                  <span class="score-number">{{ postulacion.dictamenFinal.puntajeFinalPonderado }}</span>
+                  <span class="score-scale">sobre 100 puntos</span>
+                </div>
+                <div class="score-card">
+                  <span class="score-label">Clase Demostrativa</span>
+                  <span class="score-number">{{ postulacion.dictamenFinal.puntajeClaseDemostrativa }} pts</span>
+                  <span class="score-scale">Ponderación 50%</span>
+                </div>
+                <div class="score-card">
+                  <span class="score-label">Entrevista Rectorado</span>
+                  <span class="score-number">{{ postulacion.dictamenFinal.puntajeEntrevista }} pts</span>
+                  <span class="score-scale">Ponderación 30%</span>
+                </div>
+                <div class="score-card">
+                  <span class="score-label">Méritos y Títulos</span>
+                  <span class="score-number">{{ postulacion.dictamenFinal.puntajeMeritos }} pts</span>
+                  <span class="score-scale">Ponderación 20%</span>
+                </div>
+              </div>
+
+              <div class="resolution-box">
+                <mat-icon class="icon-sm">verified</mat-icon>
+                <div>
+                  <strong>{{ postulacion.dictamenFinal.resolucionConsejo }}</strong>
+                  <p>El Consejo Directivo y Rectorado del Instituto Superior Tecnológico Sudamericano ratifican la resolución de elegibilidad. Talento Humano se comunicará para la suscripción de tu contrato de trabajo.</p>
+                </div>
+              </div>
+            </div>
+          </section>
+        }
+
+        <!-- Revision curricular -->
+        @if (postulacion.etapaActual <= 3) {
+          <section class="info-card status-info-card">
+            <div class="card-title-bar">
+              <div class="title-with-icon">
+                <mat-icon class="title-icon">hourglass_top</mat-icon>
+                <div>
+                  <h3>Expediente en Proceso de Verificación</h3>
+                  <p class="card-subtitle">Validación de méritos y afinidad curricular</p>
+                </div>
+              </div>
+            </div>
+
+            <div class="review-status-content">
+              <div class="review-steps-list">
+                <div class="review-step done">
+                  <mat-icon class="check-icon">check_circle</mat-icon>
+                  <div>
+                    <strong>Recepción del Expediente Digital</strong>
+                    <span>Hoja de vida institucional cargada correctamente en el sistema.</span>
+                  </div>
+                </div>
+                <div class="review-step in-progress">
+                  <mat-icon class="spin-icon">refresh</mat-icon>
+                  <div>
+                    <strong>Verificación de Títulos en SENESCYT</strong>
+                    <span>Comprobación de registros oficiales de tercer y cuarto nivel.</span>
+                  </div>
+                </div>
+                <div class="review-step pending">
+                  <mat-icon class="pending-icon">radio_button_unchecked</mat-icon>
+                  <div>
+                    <strong>Validación de Experiencia Docente</strong>
+                    <span>Revisión de certificados laborales por Coordinación de Carrera.</span>
+                  </div>
+                </div>
+              </div>
+
+              <div class="review-tip">
+                <mat-icon class="icon-sm">info</mat-icon>
+                <span>El equipo de Talento Humano revisa las carpetas por orden de llegada. Te notificaremos vía correo electrónico en cuanto tu expediente pase a la siguiente fase.</span>
+              </div>
+            </div>
+          </section>
+        }
+
+      </div>
+
+      <!-- Columna derecha -->
+      <div class="right-column">
+
+        <!-- Archivo cv y caducidad -->
+        @if (postulacion.expedienteCv) {
+          <section class="info-card cv-card">
+            <div class="card-title-bar">
+              <div class="title-with-icon">
+                <mat-icon class="title-icon">description</mat-icon>
+                <div>
+                  <h3>Expediente Digital Subido</h3>
+                  <p class="card-subtitle">Documento único en formato PDF institucional</p>
+                </div>
+              </div>
+            </div>
+
+            <div class="cv-file-details">
+              <div class="file-representation">
+                <mat-icon class="pdf-icon">picture_as_pdf</mat-icon>
+                <div class="file-name-meta">
+                  <span class="file-original">{{ postulacion.expedienteCv.nombreOriginal }}</span>
+                  <span class="file-sub">{{ postulacion.expedienteCv.tamanio }} • Subido el {{ postulacion.expedienteCv.fechaSubida }}</span>
+                </div>
+              </div>
+
+              <!-- Identificador unico -->
+              <div class="uuid-badge-box">
+                <span class="uuid-label">Código del archivo:</span>
+                <code class="uuid-code">{{ postulacion.expedienteCv.uuid }}</code>
+                <span class="uuid-note">Nombre en servidor: {{ postulacion.expedienteCv.nombreArchivo }}</span>
+              </div>
+
+              <button
+                type="button"
+                class="btn-download-cv"
+                (click)="descargarCvDigital()"
+                title="Descargar copia del expediente">
+                <mat-icon class="icon-xs">download</mat-icon>
+                <span>Descargar Copia de Respaldo</span>
+              </button>
+            </div>
+          </section>
+        }
+
+      </div>
+
+    </div>
+  }
+
+</main>
+
+<!-- Pie de pagina con canales de atencion -->
+<footer class="main-footer">
+  <div class="footer-content">
+    <div class="footer-brand">
+      <div class="brand-row">
+        <img src="logos/ISTS.svg" alt="Instituto Superior Tecnológico Sudamericano" class="footer-logo-img" style="height: 32px; width: auto; object-fit: contain;" />
+        <span class="footer-brand-title">Instituto Superior Tecnológico Sudamericano</span>
+      </div>
+      <p class="footer-dept">Dirección de Talento Humano • Canales de Atención</p>
+    </div>
+
+    <div class="footer-contact-grid">
+      <div class="contact-card">
+        <mat-icon class="contact-icon">mail</mat-icon>
+        <div class="contact-meta">
+          <span class="contact-lbl">Correo Institucional</span>
+          <a href="mailto:talentohumano@ists.edu.ec" class="contact-txt">talentohumano&#64;ists.edu.ec</a>
+        </div>
+      </div>
+
+      <div class="contact-card">
+        <mat-icon class="contact-icon">call</mat-icon>
+        <div class="contact-meta">
+          <span class="contact-lbl">Teléfono Directo</span>
+          <span class="contact-txt">07 257 8900 ext. 104</span>
+        </div>
+      </div>
+
+      <div class="contact-card">
+        <mat-icon class="contact-icon">schedule</mat-icon>
+        <div class="contact-meta">
+          <span class="contact-lbl">Horario de Atención</span>
+          <span class="contact-txt">Lunes a Viernes de 08:00 a 17:00</span>
+        </div>
+      </div>
+
+      <div class="contact-card">
+        <mat-icon class="contact-icon">location_on</mat-icon>
+        <div class="contact-meta">
+          <span class="contact-lbl">Campus Matriz</span>
+          <span class="contact-txt">Loja, Ecuador</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="footer-bottom">
+    <span>© 2026 ISTS. Todos los derechos reservados.</span>
+  </div>
+</footer>
